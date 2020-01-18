@@ -50,7 +50,7 @@
       module CHEMISTRY
 !
       use DUST_DATA,ONLY: NELEM
-      character(len=200) :: dispol_file(4)
+      character*200 :: dispol_file(4)
       logical :: NewFullIt
       integer :: NewBackIt,NewFastLevel,NewPreMethod
       real*8  :: NewBackFac
@@ -65,6 +65,7 @@
       logical :: charge
       character(len=2) :: catm(NELEM)           ! names of elements
       character(len=20),allocatable :: cmol(:)  ! names of molecules
+
       integer :: elnum(NELEM)                   ! indices of found elements
       integer :: elion(NELEM)                   ! indices of ions
       integer,allocatable :: fit(:)             ! fit-formular identifier
