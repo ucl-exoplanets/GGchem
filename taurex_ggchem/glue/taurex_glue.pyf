@@ -221,6 +221,16 @@ python module fort_ggchem ! in
             integer*8, optional :: preuse=0
             integer*8, optional :: ieqconditer=0
         end module exchange
+        subroutine init_dustchem_taurex ! in :fort_ggchem:glue/init_dustchem_taurex.f
+            use parameters, only: model_eqcond,phyllosilicates
+            use chemistry, only: nmole,nelm,catm
+            use dust_data, only: ndustmax,neps,nelem,ndust,eps0,amu,dust_nam,dust_rho,dust_vol,dust_mass,dust_nel,dust_nu,dust_el,fit,cfit,elnr,elcode,elnam,mass,tmelt,tcorr,dustchem_file
+            use exchange, only: h,si,al,ca
+        end subroutine init_dustchem_taurex
+        subroutine check_melting ! in :fort_ggchem:glue/init_dustchem_taurex.f
+            use chemistry, only: nmole,nelm,catm
+            use dust_data, only: qp,nelem,ndust,dust_nam,tmelt,tcorr,is_liquid
+        end subroutine check_melting
         module fort_ggchem ! in :fort_ggchem:glue/taurex_glue.f90
             subroutine init_lean ! in :fort_ggchem:glue/taurex_glue.f90:fort_ggchem
                 use parameters, only: elements

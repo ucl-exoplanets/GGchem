@@ -45,6 +45,7 @@ def build_ggchem():
                         'src16/stindex.f',
                         'src16/upper.f',
                         'src16/nucleation.f',
+                        'taurex_ggchem/glue/init_dustchem_taurex.f',
                         'taurex_ggchem/glue/datamod.f90',
                         'taurex_ggchem/glue/taurex_glue.f90',
                         'taurex_ggchem/glue/taurex_glue.pyf',
