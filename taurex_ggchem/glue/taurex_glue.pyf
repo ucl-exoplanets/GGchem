@@ -5,7 +5,7 @@ python module fort_ggchem ! in
     interface  ! in :fort_ggchem
         module fort_ggchem ! in :fort_ggchem:glue/taurex_glue.f90
             subroutine init_lean ! in :fort_ggchem:glue/taurex_glue.f90:fort_ggchem
-                use dust_data, only: nelem,eps=>eps0,mass,muh,elnam,amu
+                use dust_data, only: nelem,eps0,mass,muh,elnam,amu
                 use exchange, only: h,he,li,be,b,c,n,o,f,ne,na,mg,al,si,p,s,cl,ar,k,ca,sc,ti,v,cr,mn,fe,co,ni,cu,zn,ga,ge,as,se,br,kr,rb,sr,y,zr,w
             end subroutine init_lean
             subroutine init_taurex_chemistry(nelem_t,cel,ndispol,dispolfiles,do_charge) ! in :fort_ggchem:glue/taurex_glue.f90:fort_ggchem
@@ -13,9 +13,9 @@ python module fort_ggchem ! in
                 use dust_data, only: mass,mel,amu
                 use exchange, only: nmol,mmol
                 integer, optional,intent(in),check(len(cel)>=nelem_t),depend(cel) :: nelem_t=len(cel)
-                character(len=4) dimension(nelem_t),intent(in) :: cel
+                character(len=*) dimension(nelem_t),intent(in) :: cel
                 integer, optional,intent(in),check(len(dispolfiles)>=ndispol),depend(dispolfiles) :: ndispol=len(dispolfiles)
-                character(len=1024) dimension(ndispol),intent(in) :: dispolfiles
+                character(len=*) dimension(ndispol),intent(in) :: dispolfiles
                 logical intent(in) :: do_charge
             end subroutine init_taurex_chemistry
         end module fort_ggchem

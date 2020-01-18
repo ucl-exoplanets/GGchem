@@ -191,8 +191,8 @@ module fort_ggchem
 
         implicit none
 
-        character*1024,intent(in) :: dispolfiles(ndispol)
-        character*2, intent(in) :: cel(nelem_t)
+        character(len=*), intent(in) :: dispolfiles(ndispol)
+        character(len=*), intent(in) :: cel(nelem_t)
         character*2 :: elnam
         integer, intent(in) :: nelem_t, ndispol
         logical, intent(in) :: do_charge
@@ -206,7 +206,6 @@ module fort_ggchem
         do i=1,nelem_t
                 elnam = cel(i)
                 catm(i) = elnam
-                print*,'element '//elnam
                 if     (elnam=='el') then; el=i ; charge=.true.
                 elseif (elnam=='H')  then;  H=i ; elnum(i)=1 
                 elseif (elnam=='He') then; He=i ; elnum(i)=2 
