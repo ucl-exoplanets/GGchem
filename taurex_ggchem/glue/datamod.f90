@@ -13,7 +13,7 @@
       module DUST_DATA
 !
       character(len=200) :: DustChem_file
-      integer,parameter :: qp = selected_real_kind ( 33, 4931 )
+      integer,parameter :: qp = 8
       integer,parameter :: NELEM=41        ! number of elements (up to Zr + W)
       integer,parameter :: NDUSTmax=500    ! max number of condensed species
       integer :: NDUST                     ! number of condensed species
@@ -22,7 +22,7 @@
       character(len=2)  :: elnam(NELEM)       ! names of elements
       character(len=20) :: dust_nam(NDUSTmax) ! names of dust species
       integer :: elnr(NELEM),elcode(NELEM)    ! element cross-indices
-      real(kind=qp) :: eps0(NELEM)            ! element abundances
+      real*8 :: eps0(NELEM)            ! element abundances
       real*8  :: mass(NELEM)                  ! element masses
       real*8  :: dust_rho(NDUSTmax)           ! dust material densities
       real*8  :: dust_mass(NDUSTmax)          ! dust monomer volume
@@ -37,13 +37,13 @@
       integer :: fit(NDUSTmax)                ! fit-formular identifier
       real*8  :: cfit(NDUSTmax,0:4)           ! pvap fit coefficients
       
-      real(kind=qp) :: bk=1.380662Q-16        ! Boltzman constant
-      real(kind=qp) :: bar=1.Q+6              ! 1 bar in dyn/cm2
-      real(kind=qp) :: amu=1.66055Q-24        ! atomar mass unit
-      real(kind=qp) :: atm=1.013Q+6           ! standard atmosphere pressure
-      real(kind=qp) :: rgas=8.3144598Q+0      ! gas constant 
-      real(kind=qp) :: mel=9.109389754Q-28    ! electron mass
-      real(kind=qp) :: muH                    ! rho/n<H>
+      real*8 :: bk=1.380662Q-16        ! Boltzman constant
+      real*8 :: bar=1.Q+6              ! 1 bar in dyn/cm2
+      real*8 :: amu=1.66055Q-24        ! atomar mass unit
+      real*8 :: atm=1.013Q+6           ! standard atmosphere pressure
+      real*8 :: rgas=8.3144598Q+0      ! gas constant 
+      real*8 :: mel=9.109389754Q-28    ! electron mass
+      real*8 :: muH                    ! rho/n<H>
       end
 
 !
@@ -84,10 +84,10 @@
       module STRUCTURE
 !
       use DUST_DATA,ONLY: NELEM
-      integer,parameter :: qp = selected_real_kind ( 33, 4931 )
+      integer,parameter :: qp = 8
       integer,parameter :: Npmax=10000 
       real*8,dimension(Npmax) :: Tgas,press,pelec,dens,nHtot
-      real(kind=qp) :: estruc(Npmax,NELEM)
+      real*8 :: estruc(Npmax,NELEM)
       end
 
 !
@@ -95,9 +95,9 @@
 !
       use CHEMISTRY,ONLY: NMOLE
       use DUST_DATA,ONLY: NELEM
-      integer,parameter :: qp = selected_real_kind ( 33, 4931 )
-      real(kind=qp) :: nel,nat(NELEM),nion(NELEM)
-      real(kind=qp),allocatable :: nmol(:),mmol(:)
+      integer,parameter :: qp = 8
+      real*8 :: nel,nat(NELEM),nion(NELEM)
+      real*8,allocatable :: nmol(:),mmol(:)
       integer :: HII,HeII,CII,NII,OII,NaII,MgII,LiII,ClII
       integer :: AlII,KII,TiII,SII,SiII,FeII,CaII
       integer,parameter :: H=1,He=2,Li=3,Be=4,B=5,C=6,N=7,O=8,F=9

@@ -11,10 +11,10 @@ class GGChem(Chemistry):
     element_index_dict = dict(zip(allowed_elements[1:],range(1,len(allowed_elements))))
 
     def __init__(self, dispol_files = None, 
-                 elements = ['H', 'C', 'N', 'O'],
-                 abundances = [0.25,0.25,0.25,0.25],
-                 equilibrium_condensation=False, dustchem_file):
-        
+                 elements = ['H', 'He', 'C', 'N', 'O'],
+                 abundances = [9.271E-01,7.159E-02 ,3.112E-04,8.895E-05,7.008E-04],
+                 equilibrium_condensation=False, dustchem_file=None):
+        super().__init__(self.__class__.__name__)
         self._elements = elements
         self._element_number = [self.allowed_elements.index(e) for e in elements if e is not 'el']
         self._charge = 'el' in self._elements
@@ -24,13 +24,15 @@ class GGChem(Chemistry):
         fchem.parameters.elements = ' '.join([s.ljust(2) for s in self._elements if s is not 'el']).ljust(200)
         dispol = [s.ljust(200) for s in dispol_files]  
 
-        elements = fchem.dust_data.elnam.tostring().decode('utf-8')  
-        elements = [elements[i:i+2].strip() for i in range(0, len(elements ), 2)] 
+        fchem.fort_ggchem.init_taurex_chemistry(dispol,self._charge)
 
-        self._elements = elements
+        # elements = fchem.dust_data.elnam.tostring().decode('utf-8')  
+        # elements = [elements[i:i+2].strip() for i in range(0, len(elements ), 2)] 
+
+        # self._elements = elements
         self._abundances = np.array(abundances)
 
-        fchem.fort_ggchem.init_taurex_chemistry(dispol_files,self._charge)
+
 
         _mols = fchem.fort_ggchem.copy_molecule_names(fchem.chemistry.nmole) 
         mols = np.lib.stride_tricks.as_strided(_mols, strides=(_mols.shape[1],1))
@@ -43,7 +45,7 @@ class GGChem(Chemistry):
         self.info('Loading dustchem file %s',dustchem_file)
         fchem.dust_data.dustchem_file = dustchem_file.ljust(200)   
         fchem.init_dustchem_taurex()
-
+        self.update_abundances()
 
     def restore_molecule_names(self):
         import re
@@ -57,12 +59,28 @@ class GGChem(Chemistry):
 
         self._molecules = [pattern.sub(lambda m: rep[re.escape(m.group(0))], s) for s in self._molecules]
 
+
+    def update_abundances(self):
+        
+        fchem.dust_data.muh = 0.0
+
+        for mol,abundance in zip(self._elements,self._abundances):
+            self.info('%s %s',mol,abundance)
+            try:
+                mol_idx = int(getattr(fchem.chemistry,mol.lower()))-1
+                fchem.dust_data.eps0[mol_idx] = abundance
+                fchem.dust_data.muh += fchem.dust_data.mass[mol_idx]*abundance
+                self.info('%s %s',fchem.dust_data.mass[mol_idx]*abundance,fchem.dust_data.muh)
+            except AttributeError:
+                pass 
     def initialize_chemistry(self, nlayers=100, temperature_profile=None,
                              pressure_profile=None, altitude_profile=None):
         
+
         fchem.structure.tgas[:nlayers] = temperature_profile
         fchem.structure.press[:nlayers] = pressure_profile*10 # to dyn/cm2
+        self.update_abundances()
         fchem.structure.estruc[:nlayers,:] = fchem.dust_data.eps0
-
         self.info('Running GGChem equilibrium code...')
+        
 
