@@ -199,8 +199,8 @@
       use DUST_DATA,ONLY: qp,NELEM,NDUST,dust_nam,Tmelt,Tcorr,is_liquid
       implicit none
       real*8 :: T
-      real(kind=qp) :: nat(NELEM),nmol(NMOLE),Sat(NDUST)
-      real(kind=qp) :: old,new,S(NDUST,10000)
+      real*8 :: nat(NELEM),nmol(NMOLE),Sat(NDUST)
+      real*8 :: old,new,S(NDUST,10000)
       integer :: i,j,k,iT,Ncheck,il,is
       integer :: iliq(NDUST),isol(NDUST)
       character(len=15) :: search

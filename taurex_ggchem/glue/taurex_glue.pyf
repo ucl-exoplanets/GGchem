@@ -29,7 +29,7 @@ python module fort_ggchem ! in
         end module parameters
         module dust_data ! in :fort_ggchem:glue/datamod.f90
             character(len=200) :: dustchem_file
-            integer, parameter,optional :: qp=selected_real_kind(33, 4931)
+            integer, parameter,optional :: qp=16
             integer, parameter,optional :: nelem=41
             integer, parameter,optional :: ndustmax=500
             integer :: ndust
@@ -38,7 +38,7 @@ python module fort_ggchem ! in
             character(len=20) dimension(500) :: dust_nam
             integer dimension(41) :: elnr
             integer dimension(41) :: elcode
-            real(kind=-1) dimension(41) :: eps0
+            real(kind=16) dimension(41) :: eps0
             real*8 dimension(41) :: mass
             real*8 dimension(500) :: dust_rho
             real*8 dimension(500) :: dust_mass
@@ -51,17 +51,17 @@ python module fort_ggchem ! in
             integer dimension(500,8) :: dust_nu
             integer dimension(500) :: fit
             real*8 dimension(500,5) :: cfit
-            real(kind=-1), optional :: bk=1.380662q-16
-            real(kind=-1), optional :: bar=1.q+6
-            real(kind=-1), optional :: amu=1.66055q-24
-            real(kind=-1), optional :: atm=1.013q+6
-            real(kind=-1), optional :: rgas=8.3144598q+0
-            real(kind=-1), optional :: mel=9.109389754q-28
-            real(kind=-1) :: muh
+            real(kind=16), optional :: bk=1.380662q-16
+            real(kind=16), optional :: bar=1.q+6
+            real(kind=16), optional :: amu=1.66055q-24
+            real(kind=16), optional :: atm=1.013q+6
+            real(kind=16), optional :: rgas=8.3144598q+0
+            real(kind=16), optional :: mel=9.109389754q-28
+            real(kind=16) :: muh
         end module dust_data
         module chemistry ! in :fort_ggchem:glue/datamod.f90
             use dust_data, only: nelem
-            character dimension(4,200),intent(c) :: dispol_file
+            character(len=200) dimension(4) :: dispol_file
             logical :: newfullit
             integer :: newbackit
             integer :: newfastlevel
@@ -137,24 +137,24 @@ python module fort_ggchem ! in
         end module chemistry
         module structure ! in :fort_ggchem:glue/datamod.f90
             use dust_data, only: nelem
-            integer, parameter,optional :: qp=selected_real_kind(33, 4931)
+            integer, parameter,optional :: qp=16
             integer, parameter,optional :: npmax=10000
             real*8 dimension(10000) :: tgas
             real*8 dimension(10000) :: press
             real*8 dimension(10000) :: pelec
             real*8 dimension(10000) :: dens
             real*8 dimension(10000) :: nhtot
-            real(kind=-1) dimension(10000,41) :: estruc
+            real(kind=16) dimension(10000,41) :: estruc
         end module structure
         module exchange ! in :fort_ggchem:glue/datamod.f90
             use chemistry, only: nmole
             use dust_data, only: nelem
-            integer, parameter,optional :: qp=selected_real_kind(33, 4931)
-            real(kind=-1) :: nel
-            real(kind=-1) dimension(41) :: nat
-            real(kind=-1) dimension(41) :: nion
-            real(kind=-1), allocatable,dimension(:) :: nmol
-            real(kind=-1), allocatable,dimension(:) :: mmol
+            integer, parameter,optional :: qp=16
+            real(kind=16) :: nel
+            real(kind=16) dimension(41) :: nat
+            real(kind=16) dimension(41) :: nion
+            real(kind=16), allocatable,dimension(:) :: nmol
+            real(kind=16), allocatable,dimension(:) :: mmol
             integer :: hii
             integer :: heii
             integer :: cii
@@ -263,6 +263,18 @@ python module fort_ggchem ! in
                 integer intent(in) :: nmole
                 character dimension(nmole,20),intent(out,c),depend(nmole) :: t_cmol
             end subroutine copy_molecule_names
+            subroutine run_ggchem(nlayers,nnmol,nnelem,elem_out,mol_out) ! in :fort_ggchem:glue/taurex_glue.f90:fort_ggchem
+                use parameters, only: tmin,tmax,pmin,pmax,nhmin,nhmax,usedatabase,model_eqcond,model_pconst,npoints,remove_condensates
+                use chemistry, only: nelm,nmole,elnum,cmol,catm,el,charge
+                use dust_data, only: nelem,ndust,elnam,eps0,bk,bar,muh,amu,dust_nel,dust_el,dust_nu,dust_nam,dust_mass,dust_vol,mass,mel
+                use structure, only: npmax,tgas,press,pelec,dens,nhtot,estruc
+                use exchange, only: nel,nat,nion,nmol,mmol,h,c,n,o,w,s,ca,si,mg,al,fe
+                integer intent(in) :: nlayers
+                integer intent(in) :: nnmol
+                integer intent(in) :: nnelem
+                real*8 dimension(nlayers,nnelem),intent(out),depend(nlayers,nnelem) :: elem_out
+                real*8 dimension(nlayers,nnmol),intent(out),depend(nlayers,nnmol) :: mol_out
+            end subroutine run_ggchem
         end module fort_ggchem
     end interface 
 end python module fort_ggchem
