@@ -20,7 +20,7 @@ default_abundances = [9.271E-01,7.159E-02,1.077E-11,1.382E-11,2.305E-10,3.112E-0
               5.962E-11,1.611E-12,5.234E-12]
 
 
-selected = ['H', 'He', 'C', 'N', 'O', 'Na', 'Mg', 'Si', 'Fe', 'Al', 'Ca', 'Ti', 'S', 'Cl', 'K', 'Li', 'F', 'P', 'V', 'Cr', 'Mn', 'Ni', 'Zr', 'W', 'el']
+selected = ['H', 'He', 'C', 'N', 'O',]# 'Na', 'Mg', 'Si', 'Fe', 'Al', 'Ca', 'Ti', 'S', 'Cl', 'K', 'Li', 'F', 'P', 'V', 'Cr', 'Mn', 'Ni', 'Zr', 'W']
 sel_ab = [default_abundances[default_elements.index(s)] for s in selected if s is not 'el']
 
 class GGChem(Chemistry):
@@ -61,15 +61,20 @@ class GGChem(Chemistry):
         fchem.fort_ggchem.init_lean()
         fchem.parameters.elements = ' '.join([s.ljust(2) for s in clean_elements]).ljust(200)
         dispol = [s.ljust(200) for s in dispol_files]  
+
         self._abundances = np.array(clean_abundances)
         self.update_abundances()
         fchem.fort_ggchem.init_taurex_chemistry(dispol,self._charge)
 
-        elements = fchem.dust_data.elnam.tostring().decode('utf-8')  
-        elements = [elements[i:i+2].strip() for i in range(0, len(elements ), 2)] 
+        _atms = fchem.fort_ggchem.copy_atom_names(fchem.chemistry.nelm) 
+        atms = np.lib.stride_tricks.as_strided(_atms, strides=(_atms.shape[1],1))
 
-        #self._elements = elements
+        atms = [s[0].decode('utf-8') for s in np.char.strip(atms.view('S2'))]
 
+        self._elements = atms
+        # print(self._elements)
+        # quit()
+        fchem.parameters.model_eqcond = equilibrium_condensation
 
         fchem.parameters.tfast = Tfast
 
@@ -88,6 +93,31 @@ class GGChem(Chemistry):
 
         self._setup_active_inactive()
 
+    # def compute_mu_profile(self, nlayers):
+    #     from taurex.util import get_molecular_weight
+    #     from taurex.constants import AMU
+    #     """
+    #     Computes molecular weight of atmosphere
+    #     for each layer
+
+    #     Parameters
+    #     ----------
+    #     nlayers: int
+    #         Number of layers
+    #     """
+
+    #     self.mu_profile = np.zeros(shape=(nlayers,))
+    #     if self.activeGasMixProfile is not None:
+    #         for idx, gasname in enumerate(self.activeGases):
+    #             self.mu_profile += self.activeGasMixProfile[idx] * \
+    #                 get_molecular_weight(gasname)
+    #     if self.inactiveGasMixProfile is not None:
+    #         for idx, gasname in enumerate(self.inactiveGases):
+    #             print(gasname,get_molecular_weight(gasname)/AMU)
+    #             self.mu_profile += self.inactiveGasMixProfile[idx] * \
+    #                 get_molecular_weight(gasname)
+    #             print(self.inactiveGasMixProfile[idx,-1])
+    #             print(self.mu_profile[-1]/AMU)
 
     def _setup_active_inactive(self):
 
@@ -97,7 +127,7 @@ class GGChem(Chemistry):
         inactive_indices = []
         nmol = fchem.chemistry.nmole 
 
-        for idx,m in enumerate(self._molecules[:nmol]):
+        for idx,m in enumerate(self._elements + self._molecules):
             if m in self._avail_active:
                 active_mols.append(m)
                 active_indices.append(idx)
@@ -147,7 +177,7 @@ class GGChem(Chemistry):
 
     def initialize_chemistry(self, nlayers=100, temperature_profile=None,
                              pressure_profile=None, altitude_profile=None):
-        
+        from taurex.constants import KBOLTZ
 
         fchem.structure.tgas[:nlayers] = temperature_profile
         fchem.structure.press[:nlayers] = pressure_profile*10 # to dyn/cm2
@@ -155,10 +185,12 @@ class GGChem(Chemistry):
         fchem.structure.estruc[:nlayers,:] = fchem.dust_data.eps0
         self.info('Running GGChem equilibrium code...')
         nmol = fchem.chemistry.nmole 
-        nelem = fchem.dust_data.nelem 
-        elem, mols = fchem.fort_ggchem.run_ggchem(nlayers,nelem,nmol)
-
-        self._vmr = mols.T
+        nelem = fchem.chemistry.nelm 
+        mols = fchem.fort_ggchem.run_ggchem(nlayers,nelem+nmol)
+        self._mols = mols
+        self._vmr = mols/np.sum(mols,axis=0)
+        #self._vmr = mols/1e-6 #m-3
+        #self._vmr /= pressure_profile/(KBOLTZ*temperature_profile)
         self.info('Computing mu Profile')
         self.compute_mu_profile(nlayers)
 
