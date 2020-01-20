@@ -133,3 +133,21 @@ The equilibrium condensation code requires many calls of the gas-phase
 equilibrium chemistry routine, and takes about 0.02-0.09 sec per call,
 depending on how much useful information is found in database.dat.
  
+# TauREx 3 plugin
+
+GGChem can be used in TauREx (version>3.1) with a supplied plugin. To install it do:
+
+```
+pip install .
+```
+
+in the root directory. This will also automatically compile everything for you.
+Now you can use it in a TauREx3 input file:
+
+```
+[Chemistry]
+chemistry_type = ggchem
+elements = H,He,C,N,O
+abundances= 9e-1,1e-2
+equilibrium_condensation = True
+```
