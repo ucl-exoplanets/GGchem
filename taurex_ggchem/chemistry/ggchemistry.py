@@ -20,7 +20,7 @@ default_abundances = [9.271E-01,7.159E-02,1.077E-11,1.382E-11,2.305E-10,3.112E-0
               5.962E-11,1.611E-12,5.234E-12]
 
 
-selected = ['H', 'He', 'C', 'N', 'O',]# 'Na', 'Mg', 'Si', 'Fe', 'Al', 'Ca', 'Ti', 'S', 'Cl', 'K', 'Li', 'F', 'P', 'V', 'Cr', 'Mn', 'Ni', 'Zr', 'W']
+selected = ['H', 'He', 'C', 'N', 'O', 'Na', 'Mg', 'Si', 'Fe', 'Al', 'Ca', 'Ti', 'S', 'Cl', 'K', 'Li', 'F', 'P', 'V', 'Cr', 'Mn', 'Ni', 'Zr', 'W']
 sel_ab = [default_abundances[default_elements.index(s)] for s in selected if s is not 'el']
 
 class GGChem(Chemistry):
@@ -36,7 +36,8 @@ class GGChem(Chemistry):
     def __init__(self, dispol_files = None, 
                  elements = selected,
                  abundances = sel_ab,
-                 equilibrium_condensation=False, dustchem_file=None,Tfast=1000):
+                 equilibrium_condensation=False, dustchem_file=None,Tfast=1000,
+                 derived_ratios=['C/O']):
         super().__init__(self.__class__.__name__)
 
         self._charge = 'el' in elements
