@@ -1,1 +1,1 @@
-dict(real=dict(qp='long_double'))
+{'real':{'qp':'long_double','':'double'}}

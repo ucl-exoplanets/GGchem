@@ -610,11 +610,11 @@ module fort_ggchem
 
                 do it=1,99
                   nHges = p*mu/(bk*Tg)/muH
-                  !if (model_eqcond) then
-                  !  call EQUIL_COND(nHges,Tg,eps,Sat,eldust,verbose)
-                  !else
-                  eps(:) = eps0(:)
-                  !endif  
+                  if (model_eqcond) then
+                    call EQUIL_COND(nHges,Tg,eps,Sat,eldust,verbose)
+                  else
+                    eps(:) = eps0(:)
+                  endif  
                   !print *, eps
                   !print *,"yes"
                   call GGCHEM(nHges,Tg,eps,.false.,0)

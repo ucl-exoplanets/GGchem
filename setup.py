@@ -16,9 +16,11 @@ install_requires = ['numpy',
                     'taurex']
 
 
-def build_fortran(package_name, fortran_sources, extra_compile_args=['-O3','-fdefault-real-8', '-fdefault-double-8','-fbounds-check' ,'-fbacktrace']):
+def build_fortran(package_name, fortran_sources, extra_compile_args=None):
     ext = Extension(name=f'taurex_ggchem.external.{package_name}',
                     extra_compile_args=extra_compile_args,
+                    extra_f90_compile_args=extra_compile_args,
+                    extra_f77_compile_args=extra_compile_args,
                     sources=fortran_sources)
 
     return ext
@@ -28,8 +30,8 @@ def build_ggchem():
     sources = [         
                         
 
-                        #'src16/equil_cond.f',
                         
+                        'src16/database.f',
                         'src16/is_nan.F',
                         'src16/nasa_polynomial.f',
                         'src16/ggchem.f',
@@ -45,13 +47,14 @@ def build_ggchem():
                         'src16/stindex.f',
                         'src16/upper.f',
                         'src16/nucleation.f',
+                        'src16/equil_cond.f',
                         'taurex_ggchem/glue/init_dustchem_taurex.f',
                         'taurex_ggchem/glue/datamod.f90',
                         'taurex_ggchem/glue/taurex_glue.f90',
                         'taurex_ggchem/glue/taurex_glue.pyf',
                         ]
 
-    return build_fortran('fort_ggchem', sources)
+    return build_fortran('fort_ggchem', sources,extra_compile_args=['-fdefault-real-8', '-fdefault-double-8', '-g','-O5'])
 
 
 
