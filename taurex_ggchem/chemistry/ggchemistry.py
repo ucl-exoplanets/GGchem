@@ -93,6 +93,7 @@ class GGChem(Chemistry):
                 self.info('%s %s',fchem.dust_data.mass[mol_idx]*abundance,fchem.dust_data.muh)
             except AttributeError:
                 pass 
+
     def initialize_chemistry(self, nlayers=100, temperature_profile=None,
                              pressure_profile=None, altitude_profile=None):
         

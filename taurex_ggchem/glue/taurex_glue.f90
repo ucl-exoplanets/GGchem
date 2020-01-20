@@ -559,7 +559,7 @@ module fort_ggchem
           subroutine run_ggchem(nLayers,nnmol,nnelem, elem_out, mol_out)
             use PARAMETERS,ONLY: Tmin,Tmax,pmin,pmax,nHmin,nHmax,useDatabase, &
                                  model_eqcond,model_pconst,Npoints, &
-                                 remove_condensates
+                                 remove_condensates, elements
              use CHEMISTRY,ONLY: NELM,NMOLE,elnum,cmol,catm,el,charge
              use DUST_DATA,ONLY: NELEM,NDUST,elnam,eps0,bk,bar,muH,amu, &
                                 dust_nel,dust_el,dust_nu,dust_nam,dust_mass, &
@@ -599,7 +599,17 @@ module fort_ggchem
              d_reservoir = 0.Q0
              eps00 = eps0
              eldust = 0.Q0
+            
+             muH = 0.0
+             do i=1,NELM
+                muH = muH + mass(i)*eps(i)
+            enddo
+
+
              mu = muH
+            !  print *,muH
+            !  print *,muH/amu
+            !  stop
              do i=1,nLayers
                 Tg      = Tgas(i)
                 p       = press(i) 
