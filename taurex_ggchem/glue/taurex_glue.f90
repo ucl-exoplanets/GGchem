@@ -668,7 +668,7 @@ module fort_ggchem
                     endif  
                   endif
                   fold = ff
-                  print '("p-it=",i3,"  mu=",2(1pE20.12))',it,mu/amu,dmu/mu
+                  !print '("p-it=",i3,"  mu=",2(1pE20.12))',it,mu/amu,dmu/mu
                   if (ABS(dmu/mu)<1.E-10) exit
                 enddo
 !
@@ -688,8 +688,8 @@ module fort_ggchem
               do j=1,NELM
                 if (j==el) cycle 
                 k = elnum(j)
-                print'(A3,2(1pE18.10))',elnam(k),eps(k)/eps00(k), &
-                              (eps(k)+e_reservoir(k))/eps00(k)
+                !print'(A3,2(1pE18.10))',elnam(k),eps(k)/eps00(k), &
+                !              (eps(k)+e_reservoir(k))/eps00(k)
               enddo
               eps0(:) = eps(:) + (1.Q0-fac)*e_reservoir(:)
               estruc(i+1,:) =  eps0(:)  ! for next layer
@@ -718,12 +718,12 @@ module fort_ggchem
              enddo  
 
 
-             print'(i4," Tg[K] =",0pF8.2,"  n<H>[cm-3] =",1pE10.3)', &
-                     i,Tg,nHges
+             !print'(i4," Tg[K] =",0pF8.2,"  n<H>[cm-3] =",1pE10.3)', &
+             !        i,Tg,nHges
 
-             write(*,1010) ' Tg=',Tg,' n<H>=',nHges, &
-                             ' p=',pgas/bar,' mu=',mu/amu, &
-                             ' dust/gas=',rhod/rhog
+             !write(*,1010) ' Tg=',Tg,' n<H>=',nHges, &
+             !                ' p=',pgas/bar,' mu=',mu/amu, &
+             !                ' dust/gas=',rhod/rhog
              do jj=1,el-1
               mol_out(jj,i) = real(nat(elnum(jj)),8)
              enddo
@@ -736,8 +736,8 @@ module fort_ggchem
              enddo
              !mol_out(:,i) = mol_out(:,i)/sum(mol_out(:,i))
             enddo
-            print *,cmol(1)
-            print *,mol_out(NELM+1,100)
-            1010 format(A4,0pF8.2,3(a6,1pE9.2),1(a11,1pE9.2))
+            !print *,cmol(1)
+            !print *,mol_out(NELM+1,100)
+            !1010 format(A4,0pF8.2,3(a6,1pE9.2),1(a11,1pE9.2))
       end subroutine
 end module
