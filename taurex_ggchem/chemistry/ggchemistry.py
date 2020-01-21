@@ -212,3 +212,8 @@ class GGChem(Chemistry):
     @property
     def inactiveGasMixProfile(self):
         return self._vmr[self._inactive_index]
+
+
+    @classmethod
+    def input_keywords(cls):
+        return ['ggchem', ]
