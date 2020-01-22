@@ -1,27 +1,9 @@
 from taurex.chemistry import Chemistry
 import numpy as np
 import taurex_ggchem.external.fort_ggchem as fchem 
+import os
 
-
-default_elements = [s.strip() for s in [' H','He','Li','Be',' B',' C',' N',' O',' F','Ne','Na','Mg','Al','Si',' P',' S',
-            'Cl','Ar',' K','Ca','Sc','Ti',' V','Cr','Mn','Fe','Co','Ni','Cu','Zn','Ga','Ge','As',
-            'Se','Br','Kr','Rb','Sr',' Y','Zr','Nb','Mo','Ru','Rh','Pd','Ag','Cd','In','Sn','Sb','Te',
-            ' I','Xe','Cs','Ba','La','Ce','Pr','Nd','Sm','Eu','Gd','Tb','Dy','Ho','Er','Tm','Yb','Lu',
-            'Hf','Ta',' W','Re','Os','Ir','Pt','Au','Hg','Tl','Pb','Bi','Th',' U']]
-
-default_abundances = [9.271E-01,7.159E-02,1.077E-11,1.382E-11,2.305E-10,3.112E-04,8.895E-05,7.008E-04,3.279E-08,6.174E-05,
-              2.168E-06,3.588E-05,2.771E-06,3.992E-05,2.816E-07,1.554E-05,2.811E-07,2.183E-06,1.275E-07,2.176E-06,
-              1.109E-09,1.041E-07,9.783E-09,4.792E-07,2.268E-07,2.231E-05,8.456E-08,1.698E-06,1.372E-08,3.810E-08,
-              7.148E-10,3.430E-09,0.000E+00,0.000E+00,0.000E+00,0.000E+00,4.373E-10,7.110E-10,1.401E-10,5.463E-10,
-              5.364E-11,1.169E-10,6.163E-11,2.421E-11,3.512E-11,1.155E-11,6.650E-11,4.340E-11,9.446E-11,1.023E-11,
-              0.000E+00,0.000E+00,0.000E+00,7.499E-11,9.072E-11,1.794E-11,3.557E-11,8.842E-12,2.591E-11,8.286E-12,
-              4.099E-12,1.585E-11,7.839E-13,1.533E-11,0.000E+00,7.449E-12,1.475E-12,7.200E-12,7.121E-12,6.980E-12,
-              0.000E+00,2.711E-11,6.691E-13,1.310E-11,1.296E-11,5.748E-11,6.325E-05,1.242E-10,6.096E-12,6.013E-11,
-              5.962E-11,1.611E-12,5.234E-12]
-
-
-selected = ['H', 'He', 'C', 'N', 'O', 'Na', 'Mg', 'Si', 'Fe', 'Al', 'Ca', 'Ti', 'S', 'Cl', 'K', 'Li', 'F', 'P', 'V', 'Cr', 'Mn', 'Ni', 'Zr', 'W']
-sel_ab = [default_abundances[default_elements.index(s)] for s in selected if s is not 'el']
+selected = ['C', 'N', 'O', 'Na', 'Mg', 'Si', 'Fe', 'Al', 'Ca', 'Ti', 'S', 'Cl', 'K', 'Li', 'F', 'P', 'V', 'Cr', 'Mn', 'Ni', 'Zr', 'W']
 
 class GGChem(Chemistry):
 
@@ -34,38 +16,60 @@ class GGChem(Chemistry):
     element_index_dict = dict(zip(allowed_elements[1:],range(0,len(allowed_elements))))
 
     def __init__(self, dispol_files = None, 
-                 elements = selected,
-                 abundances = sel_ab,
-                 equilibrium_condensation=False, dustchem_file=None,Tfast=1000,
-                 derived_ratios=['C/O']):
+                 abundance_profile='solar',
+                 fill_elements = ['H','He'],
+                 fill_ratios = 0.5,
+                 include_charge = True,
+                 trace_elements = selected,
+                 equilibrium_condensation=False, 
+                 dustchem_file=None,
+                 Tfast=1000):
         super().__init__(self.__class__.__name__)
 
+        elements = fill_elements + trace_elements
+        if include_charge:
+            elements.append('el')
+         
+
+        self._base_data_path = os.path.join(os.path.abspath(os.path.dirname(fchem.__file__)),'data')
+
         self._charge = 'el' in elements
-        
-        clean_elements = []
-        clean_abundances = []
 
+        self.info('Using GGChem chemistry')
 
-        t_elements = [s.strip() for s in elements if s is not 'el']
-        self._passed_elements = t_elements
-        
+        ignored_elements = [s.strip() for s in elements if s not in self.allowed_elements]
 
-        for el,ab in zip(t_elements,abundances):
-            if el in self.allowed_elements:
-                clean_elements.append(el)
-                clean_abundances.append(ab)
-
+        if len(ignored_elements) > 0:
+            self.info('Elements ignored: %s',ignored_elements)
 
         if self._charge:
-            clean_elements.append('el')
+            self.info('Ions activated')
+
+
+        elements = [s.strip() for s in elements if s in self.allowed_elements]
+
+        self._passed_elements = elements
 
         fchem.fort_ggchem.init_lean()
-        fchem.parameters.elements = ' '.join([s.ljust(2) for s in clean_elements]).ljust(200)
+
+        self.setup_abundances(abundance_profile)
+
+
+        fchem.parameters.elements = ' '.join([s.ljust(2) for s in elements]).ljust(200)
+
+        if dispol_files is None:
+            dispol_files = [os.path.join(self._base_data_path,s) for s in ['dispol_BarklemCollet.dat',
+                                                                           'dispol_StockKitzmann_withoutTsuji.dat',
+                                                                           'dispol_WoitkeRefit.dat']]
+                                                            
+
         dispol = [s.ljust(200) for s in dispol_files]  
 
-        self._abundances = np.array(clean_abundances)
-        self.update_abundances()
+
+        self.info('Initializing GGchemistry')
         fchem.fort_ggchem.init_taurex_chemistry(dispol,self._charge)
+
+        self.update_abundances()
 
         _atms = fchem.fort_ggchem.copy_atom_names(fchem.chemistry.nelm) 
         atms = np.lib.stride_tricks.as_strided(_atms, strides=(_atms.shape[1],1))
@@ -73,11 +77,14 @@ class GGChem(Chemistry):
         atms = [s[0].decode('utf-8') for s in np.char.strip(atms.view('S2'))]
 
         self._elements = atms
-        # print(self._elements)
-        # quit()
+        self._passed_elements = atms
+
         fchem.parameters.model_eqcond = equilibrium_condensation
 
         fchem.parameters.tfast = Tfast
+
+        self.info('T-fast %s K',Tfast)
+        self.info('Eq. Condensation: %s', equilibrium_condensation)
 
         _mols = fchem.fort_ggchem.copy_molecule_names(fchem.chemistry.nmole) 
         mols = np.lib.stride_tricks.as_strided(_mols, strides=(_mols.shape[1],1))
@@ -87,6 +94,9 @@ class GGChem(Chemistry):
         self._molecules = mols
         self.restore_molecule_names()
 
+        if dustchem_file is None:
+            dustchem_file = os.path.join(self._base_data_path,'DustChem.dat')
+
         self.info('Loading dustchem file %s',dustchem_file)
         fchem.dust_data.dustchem_file = dustchem_file.ljust(200)   
         fchem.init_dustchem_taurex()
@@ -94,31 +104,53 @@ class GGChem(Chemistry):
 
         self._setup_active_inactive()
 
-    # def compute_mu_profile(self, nlayers):
-    #     from taurex.util import get_molecular_weight
-    #     from taurex.constants import AMU
-    #     """
-    #     Computes molecular weight of atmosphere
-    #     for each layer
 
-    #     Parameters
-    #     ----------
-    #     nlayers: int
-    #         Number of layers
-    #     """
+    def setup_abundances(self, profile):
+        
 
-    #     self.mu_profile = np.zeros(shape=(nlayers,))
-    #     if self.activeGasMixProfile is not None:
-    #         for idx, gasname in enumerate(self.activeGases):
-    #             self.mu_profile += self.activeGasMixProfile[idx] * \
-    #                 get_molecular_weight(gasname)
-    #     if self.inactiveGasMixProfile is not None:
-    #         for idx, gasname in enumerate(self.inactiveGases):
-    #             print(gasname,get_molecular_weight(gasname)/AMU)
-    #             self.mu_profile += self.inactiveGasMixProfile[idx] * \
-    #                 get_molecular_weight(gasname)
-    #             print(self.inactiveGasMixProfile[idx,-1])
-    #             print(self.mu_profile[-1]/AMU)
+        self.info('Selected abundance profile %s',profile)
+        abundance_file = os.path.join(self._base_data_path,'Abundances.dat')
+        chosen = 4 # 4 - earth 5 - ocean 6 - solar 7- meteorite
+        profile = profile.lower()
+
+        if profile in ('earthcrust',):
+            chosen = 4
+        elif profile in ('ocean',):
+            chosen = 5
+        elif profile in ('sun', 'star','solar',):
+            chosen = 6
+        elif profile in ('meteor', 'meteorites',):
+            chosen = 7
+
+        elements = []
+        abundances = []
+
+        with open(abundance_file,'r') as f:
+            f.readline()
+            f.readline()
+            f.readline()
+            f.readline()
+            f.readline()
+
+            for line in f:
+                split_line = line.split()
+                el = split_line[2].strip()
+
+                if el not in self.allowed_elements:
+                    continue
+                elements.append(el)
+                ab = float(split_line[chosen])
+                abundances.append(ab)
+
+        self.update_abundances(elements=elements,abundances=abundances)
+        
+        self._abundances = np.array([a for e,a in zip(elements,abundances) if e in self._passed_elements])
+
+
+    def get_element_index(self, element):
+        return int(getattr(fchem.chemistry,element.strip().lower()))-1
+
+
 
     def _setup_active_inactive(self):
 
@@ -159,16 +191,22 @@ class GGChem(Chemistry):
         self._molecules = [pattern.sub(lambda m: rep[re.escape(m.group(0))], s) for s in self._molecules]
 
 
-    def update_abundances(self):
+    def update_abundances(self,elements=None,abundances=None):
         
         fchem.dust_data.muh = 0.0
 
-        Habun = self._abundances[self._passed_elements.index('H')]
+        if elements is None:
+            elements = self._passed_elements
+            abundances = self._abundances
+        
 
-        for mol,abundance in zip(self._passed_elements,self._abundances):
+
+        Habun = abundances[elements.index('H')]
+
+        for mol,abundance in zip(elements,abundances):
             self.info('%s %s',mol,abundance)
             try:
-                mol_idx = int(getattr(fchem.chemistry,mol.lower()))-1
+                mol_idx = self.get_element_index(mol)
                 #mol_idx = self.element_index_dict[mol]
                 fchem.dust_data.eps0[mol_idx] = abundance/Habun
                 fchem.dust_data.muh += fchem.dust_data.mass[mol_idx]*abundance/Habun
@@ -213,6 +251,14 @@ class GGChem(Chemistry):
     def inactiveGasMixProfile(self):
         return self._vmr[self._inactive_index]
 
+    def ratio(self, element_a, element_b):
+        element_a = element_a.strip()
+        element_b = element_b.strip()
+
+        element_a_idx = int(getattr(fchem.chemistry,element_a.lower()))-1
+        element_b_idx = int(getattr(fchem.chemistry,element_b.lower()))-1
+
+        return float(fchem.dust_data.eps0[element_a_idx]/fchem.dust_data.eps0[element_b_idx])
 
     @classmethod
     def input_keywords(cls):
