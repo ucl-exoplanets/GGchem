@@ -568,7 +568,7 @@ module fort_ggchem
 
           end subroutine
 
-          subroutine run_ggchem(nLayers,nnmol, mol_out)
+          subroutine run_ggchem(nLayers,nnmol,elem, mol_out)
             use PARAMETERS,ONLY: Tmin,Tmax,pmin,pmax,nHmin,nHmax,useDatabase, &
                                  model_eqcond,model_pconst,Npoints, &
                                  remove_condensates, elements
@@ -582,6 +582,7 @@ module fort_ggchem
              implicit none
              integer,parameter :: qp =16
              integer, intent(in) :: nLayers,nnmol
+             real*8, intent(in) :: elem(41)
              real*8, intent(out) :: mol_out(nNMOL,nlayers)
              real*8 :: p,Tg,rhog,rhod,dustV,nHges,nges,mges,kT,pgas
              real*8 :: ff,fold,dmu,dfdmu
@@ -616,9 +617,16 @@ module fort_ggchem
              do i=1,NELM
                 muH = muH + mass(i)*eps(i)
             enddo
+            
+            !print *,'ELEM ',elem
 
-
+            do i = 1,nLayers
+              estruc(i,:) = real(elem(:),qp)
+              !print *,'ESTRUC ',i,' ',estruc(i,:)  
+            enddo
+            
              mu = muH
+
             !  print *,muH
             !  print *,muH/amu
             !  stop
