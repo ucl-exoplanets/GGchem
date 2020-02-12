@@ -20,7 +20,7 @@ class GGChem(Chemistry):
                  selected_elements = selected,
                  ratio_elements=None,
                  ratios_to_O=None,
-                 h_he_ratio=0.083,
+                 he_h_ratio=0.083,
                  metallicity=1.0,
                  include_charge = False,
                  equilibrium_condensation=False, 
@@ -39,7 +39,7 @@ class GGChem(Chemistry):
         if include_charge:
             elements.append('el')
          
-        self._h_he_ratio = h_he_ratio
+        self._he_h_ratio = he_h_ratio
         self._metallicity = metallicity
         self._base_data_path = os.path.join(os.path.abspath(os.path.dirname(fchem.__file__)),'data')
 
@@ -234,6 +234,8 @@ class GGChem(Chemistry):
             O_abund = self._O_abund*self._metallicity
             abundances[self._metal_idx]=ratios*O_abund
             new_abundances = self._abundances[...].astype(np.float128)
+            new_abundances/=new_abundances[elements.index('H')]
+            new_abundances[elements.index('He')] = self._he_h_ratio
         else:
             new_abundances = abundances[...].astype(np.float128)
 
@@ -247,8 +249,8 @@ class GGChem(Chemistry):
                 mol_idx = self.get_element_index(mol)
                 #mol_idx = self.element_index_dict[mol]
                 #fchem.dust_data.eps0[mol_idx] = (abundance/Habun).astype(np.float128)
-                new_abundances[mol_idx] = abundance/Habun
-                fchem.dust_data.muh += fchem.dust_data.mass[mol_idx]*abundance/Habun
+                new_abundances[mol_idx] = abundance
+                fchem.dust_data.muh += fchem.dust_data.mass[mol_idx]*abundance
                 self.info('%s %s %s %s',mol_idx, mol, abundance, abundance/Habun)
                 self.info('%s %s',fchem.dust_data.mass[mol_idx]*abundance,fchem.dust_data.muh)
             except AttributeError:
