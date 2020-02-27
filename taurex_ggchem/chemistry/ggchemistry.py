@@ -62,13 +62,13 @@ class GGChem(Chemistry):
 
 
         self._passed_elements = elements
-
+        fchem.parameters.verbose = 0
         fchem.fort_ggchem.init_lean()
 
 
 
         fchem.parameters.initchem_info = False
-        fchem.parameters.verbose = 0
+        
         fchem.parameters.elements = ' '.join([s.ljust(2) for s in elements]).ljust(200)
         #print(fchem.parameters.elements)
         #quit()
@@ -110,6 +110,8 @@ class GGChem(Chemistry):
         mols = [s[0].decode('utf-8') for s in np.char.strip(mols.view('S20'))]
 
         self._molecules = mols
+
+
         self.restore_molecule_names()
 
         if dustchem_file is None:
@@ -175,7 +177,7 @@ class GGChem(Chemistry):
 
         if ratio_elements is not None:
             for relm,rat in zip(ratio_elements,ratios_to_O):
-                index = self._metal_idx.index(ratio_elements)
+                index = self._metal_elements.index(relm)
                 self._ratios[index] = rat
 
 
