@@ -627,9 +627,9 @@ module fort_ggchem
             
             !print *, 'NELEM=',NELM
 
-            do i = 1, NELM
-             print *, elnam(elnum(i)),' ',elem(elnum(i)),' rat=',elem(elnum(i))/elem(O)
-            enddo
+            !do i = 1, NELM
+            ! print *, elnam(elnum(i)),' ',elem(elnum(i)),' rat=',elem(elnum(i))/elem(O)
+            !enddo
             
             model_pconst = .True.
             
