@@ -307,7 +307,7 @@ class GGChem(Chemistry):
 
             default_fit = False
             self.add_fittable_param(param_name, param_tex, fget,
-                                    fset, 'log', default_fit, bounds)
+                                    fset, 'linear', default_fit, bounds)
 
 
     @property
