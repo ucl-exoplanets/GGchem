@@ -57,8 +57,8 @@ class GGChem(Chemistry):
 
 
         elements = [s.strip() for s in elements if s in self.allowed_elements]
+        
 
-        self.info('Elements in system: %s',elements)
 
 
         self._passed_elements = elements
@@ -68,22 +68,22 @@ class GGChem(Chemistry):
 
 
         fchem.parameters.initchem_info = False
-        
-        fchem.parameters.elements = ' '.join([s.ljust(2) for s in elements]).ljust(200)
-        #print(fchem.parameters.elements)
-        #quit()
+
         if dispol_files is None:
             dispol_files = [os.path.join(self._base_data_path,s) for s in ['dispol_BarklemCollet.dat',
                                                                            'dispol_StockKitzmann_withoutTsuji.dat',
                                                                            'dispol_WoitkeRefit.dat']]
                                                             
-
+        fchem.parameters.elements = ' '.join([s.ljust(2) for s in elements]).ljust(200)
+        #print(fchem.parameters.elements)
+        self.info('Elements in system: %s',elements)
         dispol = [s.ljust(200) for s in dispol_files]  
 
 
         self.info('Initializing GGchemistry')
         fchem.fort_ggchem.init_taurex_chemistry(dispol,self._charge)
-
+        #print(fchem.chemistry.nelm)
+        #quit()
 
 
         _atms = fchem.fort_ggchem.copy_atom_names(fchem.chemistry.nelm) 
@@ -96,7 +96,9 @@ class GGChem(Chemistry):
         
         self.setup_abundances(abundance_profile)
         self.setup_ratios(ratio_elements,ratios_to_O)
-        self.update_abundances()
+
+        #quit()
+        # self.update_abundances()
         fchem.parameters.model_eqcond = equilibrium_condensation
 
         fchem.parameters.tfast = Tfast
@@ -120,7 +122,9 @@ class GGChem(Chemistry):
         self.info('Loading dustchem file %s',dustchem_file)
         fchem.dust_data.dustchem_file = dustchem_file.ljust(200)   
         fchem.init_dustchem_taurex()
-        self.update_abundances()
+
+        #quit()
+        # self.update_abundances()
 
         self._setup_active_inactive()
         self.add_ratio_params()
@@ -158,28 +162,39 @@ class GGChem(Chemistry):
 
                 if el not in self.allowed_elements:
                     continue
+                
                 elements.append(el)
                 ab = float(split_line[chosen])
+                self.info('%s %s', el, ab)
                 abundances[self.allowed_elements.index(el)] = ab
         
-        self.update_abundances(elements=elements,abundances=abundances)
-        self._abundances = abundances
-        self._abundances/=self._abundances[0]
+        #self.update_abundances(elements=elements,abundances=abundances)
+        self._initial_abundances = abundances
+        self._initial_abundances/=self._initial_abundances[0]
+        self.info('H relative abundances.....')
+        for el,ab in zip(self.allowed_elements,self._initial_abundances):
+            self.info('%s %s', el, ab)
+            
+    
         #raise
     def setup_ratios(self,ratio_elements,ratios_to_O):
         self._metal_idx = [self.allowed_elements.index(e) for e in self.allowed_elements if e not in ('H', 'He','el',)]
         self._metal_elements = [self.allowed_elements[idx] for idx in self._metal_idx]
-        self.info('Metals detected %s',self._metal_elements)
+        self.info('Metals detected %s',list(zip(self._metal_idx,self._metal_elements)))
         O_idx = self.allowed_elements.index('O')
-        self._O_abund = self._abundances[O_idx]
-        self._ratios = self._abundances[self._metal_idx]
+        self._O_abund = self._initial_abundances[O_idx]
+        self._ratios = self._initial_abundances[self._metal_idx]
         self._ratios/= self._O_abund
+
 
         if ratio_elements is not None:
             for relm,rat in zip(ratio_elements,ratios_to_O):
                 index = self._metal_elements.index(relm)
                 self._ratios[index] = rat
 
+        self.info('Metallic ratios against O')
+        for met, rat in zip(self._metal_elements,self._ratios):
+            self.info('%s %s',met, rat)
 
     def get_element_index(self, element):
         #return int(getattr(fchem.chemistry,element.strip().lower()))-1
@@ -225,39 +240,22 @@ class GGChem(Chemistry):
         self._molecules = [pattern.sub(lambda m: rep[re.escape(m.group(0))], s) for s in self._molecules]
 
 
-    def update_abundances(self,elements=None,abundances=None):
+    def update_abundances(self):
         
-        fchem.dust_data.muh = 0.0
-        
-        if elements is None:
-            elements = self.allowed_elements
-            abundances = self._abundances
-            ratios = self._ratios
-            O_abund = self._O_abund*self._metallicity
-            abundances[self._metal_idx]=ratios*O_abund
-            new_abundances = self._abundances[...].astype(np.float128)
-            new_abundances/=new_abundances[elements.index('H')]
-            new_abundances[elements.index('He')] = self._he_h_ratio
-        else:
-            new_abundances = abundances[...].astype(np.float128)
+        elements = self.allowed_elements
+        abundances = self._initial_abundances
+        ratios = self._ratios
+        O_abund = self._O_abund*self._metallicity
+        abundances[self._metal_idx]=ratios*O_abund
+        new_abundances = self._initial_abundances[...].astype(np.float128)
+        new_abundances/=new_abundances[elements.index('H')]
+        new_abundances[elements.index('He')] = self._he_h_ratio
 
-
-        Habun = abundances[elements.index('H')]
-        for mol,abundance in zip(elements,abundances):
-            
-            if mol not in self._passed_elements:
-                continue
-            try:
-                mol_idx = self.get_element_index(mol)
-                #mol_idx = self.element_index_dict[mol]
-                #fchem.dust_data.eps0[mol_idx] = (abundance/Habun).astype(np.float128)
-                new_abundances[mol_idx] = abundance
-                fchem.dust_data.muh += fchem.dust_data.mass[mol_idx]*abundance
-                self.info('%s %s %s %s',mol_idx, mol, abundance, abundance/Habun)
-                self.info('%s %s',fchem.dust_data.mass[mol_idx]*abundance,fchem.dust_data.muh)
-            except AttributeError:
-                pass 
         return new_abundances
+        
+
+
+
     def initialize_chemistry(self, nlayers=100, temperature_profile=None,
                              pressure_profile=None, altitude_profile=None):
         from taurex.constants import KBOLTZ
@@ -268,7 +266,6 @@ class GGChem(Chemistry):
 
         fchem.structure.tgas[:nlayers] = temperature_profile
         fchem.structure.press[:nlayers] = pressure_profile*10 # to dyn/cm2
-        fchem.structure.estruc[:nlayers,:] = ab[None,:]
         self.info('Running GGChem equilibrium code...')
         nmol = fchem.chemistry.nmole 
         nelem = fchem.chemistry.nelm 
@@ -333,9 +330,8 @@ class GGChem(Chemistry):
         element_a = element_a.strip()
         element_b = element_b.strip()
 
-        element_a_idx = int(getattr(fchem.chemistry,element_a.lower()))-1
-        element_b_idx = int(getattr(fchem.chemistry,element_b.lower()))-1
-
+        element_a_idx = self.get_element_index(element_a)
+        element_b_idx = self.get_element_index(element_b)
         return float(fchem.dust_data.eps0[element_a_idx]/fchem.dust_data.eps0[element_b_idx])
 
     @classmethod

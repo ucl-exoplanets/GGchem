@@ -615,15 +615,23 @@ module fort_ggchem
             
              muH = 0.0
              do i=1,NELM
-                muH = muH + mass(i)*eps(i)
+                muH = muH + mass(elnum(i))*eps(elnum(i))
             enddo
             
             !print *,'ELEM ',elem
 
             do i = 1,nLayers
-              estruc(i,:) = real(elem(:),qp)
-              !print *,'ESTRUC ',i,' ',estruc(i,:)  
+                estruc(i,:) = real(elem(:),qp)
+                 !print *,'ESTRUC ',i,' ',estruc(i,:)  
             enddo
+            
+            !print *, 'NELEM=',NELM
+
+            do i = 1, NELM
+             print *, elnam(elnum(i)),' ',elem(elnum(i)),' rat=',elem(elnum(i))/elem(O)
+            enddo
+            
+            model_pconst = .True.
             
              mu = muH
 
