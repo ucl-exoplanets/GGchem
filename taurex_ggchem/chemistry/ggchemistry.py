@@ -278,9 +278,8 @@ class GGChem(Chemistry):
         self.info('Running GGChem equilibrium code...')
         nmol = fchem.chemistry.nmole 
         nelem = fchem.chemistry.nelm 
-        mols = fchem.fort_ggchem.run_ggchem(nelem+nmol,temperature_profile,
-                                            pressure_profile*10,ab)
-        self._mols = mols
+        mols = [fchem.fort_ggchem.run_ggchem(nelem+nmol,t,p*10,ab) for t,p in zip(temperature_profile,pressure_profile) ]
+        self._mols = np.stack(mols).T
         #self._vmr = mols/np.sum(mols,axis=0)
         #self._vmr = self._mols
         #self._vmr = mols/1e-6 #m-3
