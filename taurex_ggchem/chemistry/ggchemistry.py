@@ -86,7 +86,7 @@ class GGChem(Chemistry):
                                                                     ]]
                                                             
         fchem.parameters.elements = ' '.join([s.ljust(2) for s in elements]).ljust(200)
-        print('ELEMENTS',fchem.parameters.elements)
+        #print('ELEMENTS',fchem.parameters.elements)
         self.info('Elements in system: %s',elements)
         dispol = [s.ljust(200) for s in dispol_files]  
 
