@@ -189,7 +189,7 @@ class GGChem(Chemistry):
         #raise
     def setup_ratios(self,ratio_elements,ratios_to_O):
         self._metal_idx = [self.get_element_index(e) for e in self._elements if e not in ('H', 'He','el',)]
-        self._metal_elements = [self.allowed_elements[idx] for idx in self._metal_idx]
+        self._metal_elements = [e for e in self._elements if e not in ('H', 'He','el',)]
         self.info('Metals detected %s',list(zip(self._metal_idx,self._metal_elements)))
         O_idx = self.get_element_index('O')
         self._O_abund = self._initial_abundances[O_idx]
@@ -252,13 +252,12 @@ class GGChem(Chemistry):
 
     def update_abundances(self):
         
-        elements = self.allowed_elements
         abundances = self._initial_abundances
         ratios = self._ratios
         O_abund = self._O_abund*self._metallicity
         abundances[self._metal_idx]=ratios*O_abund
-        abundances/=abundances[elements.index('H')]
-        #abundances[self.get_element_index('He')] = self._he_h_ratio
+        abundances/=abundances[self.get_element_index('H')]
+        abundances[self.get_element_index('He')] = self._he_h_ratio
 
         return abundances
         
@@ -300,8 +299,6 @@ class GGChem(Chemistry):
 
         for idx,element in enumerate(self._metal_elements):
             if element == 'O':
-                continue
-            if element not in self._elements:
                 continue
             param_name = f'{element}_O_ratio'
             param_tex = f'{element}/O'
