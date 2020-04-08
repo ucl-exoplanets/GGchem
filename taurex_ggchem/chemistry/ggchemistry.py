@@ -16,7 +16,7 @@ class GGChem(Chemistry):
     element_index_dict = dict(zip(allowed_elements[1:],range(0,len(allowed_elements))))
 
     def __init__(self, dispol_files = None, 
-                 abundance_profile='solar',
+                 abundance_profile=None,
                  selected_elements = selected,
                  ratio_elements=None,
                  ratios_to_O=None,
@@ -25,7 +25,10 @@ class GGChem(Chemistry):
                  include_charge = False,
                  equilibrium_condensation=False, 
                  dustchem_file=None,
-                 Tfast=1000):
+                 Tfast=1000,
+                 new_back_it=6,  
+                 new_back_fac=1e5,
+                 new_pre_method=2, new_full_it=True, new_fast_level=1):
         super().__init__(self.__class__.__name__)
 
         elements = [s.strip() for s in selected_elements]
@@ -57,13 +60,20 @@ class GGChem(Chemistry):
 
 
         elements = [s.strip() for s in elements if s in self.allowed_elements]
-        
+
+
+        fchem.chemistry.newfullit    = new_full_it
+        fchem.chemistry.newbackit    = new_back_it
+        fchem.chemistry.newbackfac   = new_back_fac
+        fchem.chemistry.newfastlevel = new_fast_level
+        fchem.chemistry.newpremethod = new_pre_method
 
 
 
         self._passed_elements = elements
+        self._elements = elements
         fchem.parameters.verbose = 0
-        fchem.fort_ggchem.init_lean()
+        self._initial_abundances = fchem.fort_ggchem.init_lean()
 
 
 
@@ -72,10 +82,11 @@ class GGChem(Chemistry):
         if dispol_files is None:
             dispol_files = [os.path.join(self._base_data_path,s) for s in ['dispol_BarklemCollet.dat',
                                                                            'dispol_StockKitzmann_withoutTsuji.dat',
-                                                                           'dispol_WoitkeRefit.dat']]
+                                                                           'dispol_WoitkeRefit.dat',
+                                                                    ]]
                                                             
         fchem.parameters.elements = ' '.join([s.ljust(2) for s in elements]).ljust(200)
-        #print(fchem.parameters.elements)
+        print('ELEMENTS',fchem.parameters.elements)
         self.info('Elements in system: %s',elements)
         dispol = [s.ljust(200) for s in dispol_files]  
 
@@ -86,13 +97,13 @@ class GGChem(Chemistry):
         #quit()
 
 
-        _atms = fchem.fort_ggchem.copy_atom_names(fchem.chemistry.nelm) 
-        atms = np.lib.stride_tricks.as_strided(_atms, strides=(_atms.shape[1],1))
+        # _atms = fchem.fort_ggchem.copy_atom_names(fchem.chemistry.nelm) 
+        # atms = np.lib.stride_tricks.as_strided(_atms, strides=(_atms.shape[1],1))
 
-        atms = [s[0].decode('utf-8') for s in np.char.strip(atms.view('S2'))]
+        # atms = [s[0].decode('utf-8') for s in np.char.strip(atms.view('S2'))]
 
-        self._elements = atms
-        self._passed_elements = atms
+        # self._elements = atms
+        # self._passed_elements = atms
         
         self.setup_abundances(abundance_profile)
         self.setup_ratios(ratio_elements,ratios_to_O)
@@ -131,45 +142,44 @@ class GGChem(Chemistry):
 
     def setup_abundances(self, profile):
         
+        if profile is not None:
+            self.info('Selected abundance profile %s',profile)
+            abundance_file = os.path.join(self._base_data_path,'Abundances.dat')
+            chosen = 4 # 4 - earth 5 - ocean 6 - solar 7- meteorite
+            profile = profile.lower()
 
-        self.info('Selected abundance profile %s',profile)
-        abundance_file = os.path.join(self._base_data_path,'Abundances.dat')
-        chosen = 4 # 4 - earth 5 - ocean 6 - solar 7- meteorite
-        profile = profile.lower()
+            if profile in ('earthcrust',):
+                chosen = 4
+            elif profile in ('ocean',):
+                chosen = 5
+            elif profile in ('sun', 'star','solar',):
+                chosen = 6
+            elif profile in ('meteor', 'meteorites',):
+                chosen = 7
 
-        if profile in ('earthcrust',):
-            chosen = 4
-        elif profile in ('ocean',):
-            chosen = 5
-        elif profile in ('sun', 'star','solar',):
-            chosen = 6
-        elif profile in ('meteor', 'meteorites',):
-            chosen = 7
+            elements = []
+            abundances = np.zeros(shape=(len(self.allowed_elements),))
 
-        elements = []
-        abundances = np.zeros(shape=(len(self.allowed_elements),))
+            with open(abundance_file,'r') as f:
+                f.readline()
+                f.readline()
+                f.readline()
+                f.readline()
+                f.readline()
 
-        with open(abundance_file,'r') as f:
-            f.readline()
-            f.readline()
-            f.readline()
-            f.readline()
-            f.readline()
+                for line in f:
+                    split_line = line.split()
+                    el = split_line[2].strip()
 
-            for line in f:
-                split_line = line.split()
-                el = split_line[2].strip()
-
-                if el not in self.allowed_elements:
-                    continue
-                
-                elements.append(el)
-                ab = float(split_line[chosen])
-                self.info('%s %s', el, ab)
-                abundances[self.allowed_elements.index(el)] = ab
+                    if el not in self.allowed_elements:
+                        continue
+                    
+                    elements.append(el)
+                    ab = float(split_line[chosen])
+                    self.info('%s %s', el, ab)
+                    abundances[self.get_element_index(el)] = ab
         
         #self.update_abundances(elements=elements,abundances=abundances)
-        self._initial_abundances = abundances
         self._initial_abundances/=self._initial_abundances[0]
         self.info('H relative abundances.....')
         for el,ab in zip(self.allowed_elements,self._initial_abundances):
@@ -178,10 +188,10 @@ class GGChem(Chemistry):
     
         #raise
     def setup_ratios(self,ratio_elements,ratios_to_O):
-        self._metal_idx = [self.allowed_elements.index(e) for e in self.allowed_elements if e not in ('H', 'He','el',)]
+        self._metal_idx = [self.get_element_index(e) for e in self._elements if e not in ('H', 'He','el',)]
         self._metal_elements = [self.allowed_elements[idx] for idx in self._metal_idx]
         self.info('Metals detected %s',list(zip(self._metal_idx,self._metal_elements)))
-        O_idx = self.allowed_elements.index('O')
+        O_idx = self.get_element_index('O')
         self._O_abund = self._initial_abundances[O_idx]
         self._ratios = self._initial_abundances[self._metal_idx]
         self._ratios/= self._O_abund
@@ -197,8 +207,8 @@ class GGChem(Chemistry):
             self.info('%s %s',met, rat)
 
     def get_element_index(self, element):
-        #return int(getattr(fchem.chemistry,element.strip().lower()))-1
-        return self.allowed_elements.index(element)
+        return fchem.chemistry.elnum[int(getattr(fchem.chemistry,element.strip().lower()))-1]-1
+        #return self.get_element_index(element)
 
 
     def _setup_active_inactive(self):
@@ -210,7 +220,7 @@ class GGChem(Chemistry):
         nmol = fchem.chemistry.nmole 
 
         for idx,m in enumerate(self._elements + self._molecules):
-            if m in self._avail_active:
+            if m in self.availableActive:
                 active_mols.append(m)
                 active_indices.append(idx)
             else:
@@ -247,11 +257,10 @@ class GGChem(Chemistry):
         ratios = self._ratios
         O_abund = self._O_abund*self._metallicity
         abundances[self._metal_idx]=ratios*O_abund
-        new_abundances = self._initial_abundances[...].astype(np.float128)
-        new_abundances/=new_abundances[elements.index('H')]
-        new_abundances[elements.index('He')] = self._he_h_ratio
+        abundances/=abundances[elements.index('H')]
+        #abundances[self.get_element_index('He')] = self._he_h_ratio
 
-        return new_abundances
+        return abundances
         
 
 
@@ -264,16 +273,18 @@ class GGChem(Chemistry):
 
         #print(ab)
 
-        fchem.structure.tgas[:nlayers] = temperature_profile
-        fchem.structure.press[:nlayers] = pressure_profile*10 # to dyn/cm2
+        #fchem.structure.tgas[:nlayers] = temperature_profile
+        #fchem.structure.press[:nlayers] = pressure_profile*10 # to dyn/cm2
         self.info('Running GGChem equilibrium code...')
         nmol = fchem.chemistry.nmole 
         nelem = fchem.chemistry.nelm 
-        mols = fchem.fort_ggchem.run_ggchem(nlayers,nelem+nmol,ab)
+        mols = fchem.fort_ggchem.run_ggchem(nelem+nmol,temperature_profile,
+                                            pressure_profile*10,ab)
         self._mols = mols
-        self._vmr = mols/np.sum(mols,axis=0)
+        #self._vmr = mols/np.sum(mols,axis=0)
+        #self._vmr = self._mols
         #self._vmr = mols/1e-6 #m-3
-        #self._vmr /= pressure_profile/(KBOLTZ*temperature_profile)
+        self._vmr =self._mols#/= pressure_profile/(KBOLTZ*temperature_profile)
         self.info('Computing mu Profile')
         self.compute_mu_profile(nlayers)
 
@@ -290,6 +301,8 @@ class GGChem(Chemistry):
 
         for idx,element in enumerate(self._metal_elements):
             if element == 'O':
+                continue
+            if element not in self._elements:
                 continue
             param_name = f'{element}_O_ratio'
             param_tex = f'{element}/O'

@@ -114,7 +114,6 @@ python module fort_ggchem ! in
             integer, optional :: w=0
             logical :: charge
             character(len=2) dimension(41) :: catm
-            character(len=20), allocatable,dimension(:) :: cmol
             integer dimension(41) :: elnum
             integer dimension(41) :: elion
             integer, allocatable,dimension(:) :: fit
@@ -226,16 +225,18 @@ python module fort_ggchem ! in
             use chemistry, only: nmole,nelm,catm
             use dust_data, only: ndustmax,neps,nelem,ndust,eps0,amu,dust_nam,dust_rho,dust_vol,dust_mass,dust_nel,dust_nu,dust_el,fit,cfit,elnr,elcode,elnam,mass,tmelt,tcorr,dustchem_file
             use exchange, only: h,si,al,ca
+            
         end subroutine init_dustchem_taurex
         subroutine check_melting ! in :fort_ggchem:glue/init_dustchem_taurex.f
             use chemistry, only: nmole,nelm,catm
             use dust_data, only: qp,nelem,ndust,dust_nam,tmelt,tcorr,is_liquid
         end subroutine check_melting
         module fort_ggchem ! in :fort_ggchem:glue/taurex_glue.f90
-            subroutine init_lean ! in :fort_ggchem:glue/taurex_glue.f90:fort_ggchem
+            subroutine init_lean(eps00) ! in :fort_ggchem:glue/taurex_glue.f90:fort_ggchem
                 use parameters, only: elements
                 use dust_data, only: nelem,eps0,mass,muh,elnam,amu
                 use exchange, only: h,he,li,be,b,c,n,o,f,ne,na,mg,al,si,p,s,cl,ar,k,ca,sc,ti,v,cr,mn,fe,co,ni,cu,zn,ga,ge,as,se,br,kr,rb,sr,y,zr,w
+                real*8 dimension(41), intent(out) :: eps00
             end subroutine init_lean
             subroutine init_taurex_chemistry(ndispol,dispolfiles,do_charge) ! in :fort_ggchem:glue/taurex_glue.f90:fort_ggchem
                 use parameters, only: elements,initchem_info
@@ -268,16 +269,17 @@ python module fort_ggchem ! in
                 integer intent(in) :: nelm
                 character dimension(nelm,2),intent(out,c),depend(nelm) :: t_cmol
             end subroutine copy_atom_names
-            subroutine run_ggchem(nlayers,nnmol,elem,mol_out) ! in :fort_ggchem:glue/taurex_glue.f90:fort_ggchem
+            subroutine run_ggchem(nnmol,tlayer,player,elem,mol_out) ! in :fort_ggchem:glue/taurex_glue.f90:fort_ggchem
                 use parameters, only: tmin,tmax,pmin,pmax,nhmin,nhmax,usedatabase,model_eqcond,model_pconst,npoints,remove_condensates,elements
                 use chemistry, only: nelm,nmole,elnum,cmol,catm,el,charge
                 use dust_data, only: nelem,ndust,elnam,eps0,bk,bar,muh,amu,dust_nel,dust_el,dust_nu,dust_nam,dust_mass,dust_vol,mass,mel
                 use structure, only: npmax,tgas,press,pelec,dens,nhtot,estruc
                 use exchange, only: nel,nat,nion,nmol,mmol,h,c,n,o,w,s,ca,si,mg,al,fe
-                integer intent(in) :: nlayers
                 integer intent(in) :: nnmol
                 real*8 dimension(41), intent(in) :: elem
-                real*8 dimension(nnmol,nlayers),intent(out),depend(nnmol,nlayers) :: mol_out
+                real*8 intent(in) :: tlayer
+                real*8 intent(in) :: player
+                real*8 dimension(nnmol),intent(out),depend(nnmol) :: mol_out
             end subroutine run_ggchem
         end module fort_ggchem
     end interface 

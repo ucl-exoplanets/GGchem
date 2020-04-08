@@ -4,13 +4,15 @@ module fort_ggchem
 
 
   contains
-      SUBROUTINE INIT_LEAN()
+      SUBROUTINE INIT_LEAN(eps00)
         use PARAMETERS,ONLY: elements
         use DUST_DATA,ONLY: NELEM,eps0,mass,muH,elnam,amu
         use EXCHANGE,ONLY: H,He,Li,Be,B,C,N,O,F,Ne,Na,Mg,Al,Si,P,S,Cl, & 
                           Ar,K,Ca,Sc,Ti,V,Cr,Mn,Fe,Co,Ni,Cu,Zn,Ga,Ge, & 
                            As,Se,Br,Kr,Rb,Sr,Y,Zr,W 
       implicit none
+      
+      real*8, intent(out) :: eps00(41)
       integer,parameter :: qp=selected_real_kind(33,4931)
       integer :: i,j,nr
       real*8 :: abund(74,4),eps(NELEM),epsH,mfrac(NELEM)
@@ -20,12 +22,9 @@ module fort_ggchem
       character(len=10) :: source(4)
       character(len=200) :: line
       logical :: found
-      
-      elements     = 'H He C N O Na Mg Si Fe Al Ca Ti S Cl K Li el'
+    
 
-      write(*,*) 
-      write(*,*) "elemental abundances and masses ..."
-      write(*,*) "==================================="
+
       elnam(1)  = 'H '
       elnam(2)  = 'He'
       elnam(3)  = 'Li'
@@ -177,7 +176,8 @@ module fort_ggchem
         eps(i) = 10.Q0 ** (eps(i)-12.Q0)
       enddo
       eps0 = eps
-      
+      eps00 = real(eps,8)
+      print *,eps00
       end subroutine
 
 
@@ -277,7 +277,10 @@ module fort_ggchem
             print*,'element '//elnam,elnum(NELM)
           endif
         enddo
+        
 
+
+        
           NMOLdim = 10000
           if (allocated(cmol)) then 
             deallocate(cmol)
@@ -308,7 +311,8 @@ module fort_ggchem
           allocate(cmol(NMOLdim),fit(NMOLdim),natom(NMOLdim))
           allocate(error(NMOLdim),a(NMOLdim,0:13))
           allocate(source(NMOLdim),m_kind(0:6,NMOLdim),m_anz(6,NMOLdim))
-
+          
+          cmol(:) = ""
           a = 0.0
           i=1
           i_nasa = 0
@@ -568,7 +572,7 @@ module fort_ggchem
 
           end subroutine
 
-          subroutine run_ggchem(nLayers,nnmol,elem, mol_out)
+          subroutine run_ggchem(nnmol,tlayer,player,elem, mol_out)
             use PARAMETERS,ONLY: Tmin,Tmax,pmin,pmax,nHmin,nHmax,useDatabase, &
                                  model_eqcond,model_pconst,Npoints, &
                                  remove_condensates, elements
@@ -581,10 +585,13 @@ module fort_ggchem
                                H,C,N,O,W,S,Ca,Si,Mg,Al,Fe
              implicit none
              integer,parameter :: qp =16
-             integer, intent(in) :: nLayers,nnmol
+             integer, intent(in) :: nnmol
              real*8, intent(in) :: elem(41)
-             real*8, intent(out) :: mol_out(nNMOL,nlayers)
-             real*8 :: p,Tg,rhog,rhod,dustV,nHges,nges,mges,kT,pgas
+             real*8, intent(out) :: mol_out(nNMOL)
+             real*8, intent(in) :: Tlayer
+             real*8, intent(in) :: player
+             real*8 :: p,Tg, nHges, pgas
+             real*8  :: rhog,rhoc,rhod,d2g,mcond,mgas,Vcon,Vcond,Vgas,ngas, mugas
              real*8 :: ff,fold,dmu,dfdmu
              real*8 :: nTEA,pTEA,mu,muold,Jstar,Nstar
              real(kind=qp) :: eps(NELEM),eps00(NELEM)
@@ -596,7 +603,7 @@ module fort_ggchem
              character(len=4) :: sup
              character(len=2) :: test3
              character(len=1) :: char
-             integer :: verbose=0
+             integer :: verbose=0,verb
              logical :: isOK,hasW,same,TEAinterface=.false.
             
              do i=1,NDUST
@@ -605,153 +612,147 @@ module fort_ggchem
               short_name(i) = name
               if (j>0) short_name(i)=name(1:j-1)
             enddo
-            eps  = eps0
-            NOUT = NELM
-            if (charge) NOUT=NOUT-1
-             e_reservoir = 0.Q0
-             d_reservoir = 0.Q0
-             eps00 = eps0
-             eldust = 0.Q0
             
-             muH = 0.0
-             do i=1,NELM
-                muH = muH + mass(elnum(i))*eps(elnum(i))
+
+            eps   = real(elem(:),qp)
+
+            !write(*,*) 
+            !write(*,*) "elemental abundances and masses ..."
+            !write(*,*) "==================================="
+            !write(*,*) elements
+
+            muH = 0.d0
+            !write(*,'(7x,A8,A8,A12,A13)') "mass","eps","n/nH","log10(n/nSi)"
+            do i=1,NELEM
+              if (index(elements,trim(elnam(i))//" ")>0) then 
+                !write(*,'(1x,I2,1x,a2,1x,0pF8.3,0pF8.3,1pE12.3, 0pF13.3,1pE12.3)') &
+                !     i,elnam(i),mass(i)/amu,12.d0+LOG10(eps(i)),eps(i), &
+                !    LOG10(eps(i)/eps(Si))
+                muH = muH + mass(i)*eps(i)
+              endif  
             enddo
+            !write(*,'("rho = n<H> *",1pE12.4," amu")') muH/amu
+            !write(*,'("C/O =",0pF6.3)') eps(C)/eps(O)
+
+            Tg    = tlayer
+            nHges = nHmax
+            p     = player
+            pmax = player
             
-            !print *,'ELEM ',elem
+            mu    = muH
+            eldust = 0.0
+            verb = verbose
+        
 
-            do i = 1,nLayers
-                estruc(i,:) = real(elem(:),qp)
-                 !print *,'ESTRUC ',i,' ',estruc(i,:)  
-            enddo
+            nHges = p*mu/(bk*Tg)/muH
+            !print *,'T=', Tg
+            !print *,'nHges',nHges
+            !print *,'Pressure',pmax
+            !print *,'eps=',eps
+            !print *,'mu=',mu
+            !print *,'nel=',nel
             
-            !print *, 'NELEM=',NELM
+            !print *,cmol
 
-            !do i = 1, NELM
-            ! print *, elnam(elnum(i)),' ',elem(elnum(i)),' rat=',elem(elnum(i))/elem(O)
-            !enddo
-            
-            model_pconst = .True.
-            
-             mu = muH
+            model_pconst = .true.
 
-            !  print *,muH
-            !  print *,muH/amu
-            !  stop
-             do i=1,nLayers
-                Tg      = Tgas(i)
-                p       = press(i) 
-                !nHges   = nHtot(i)
-                eps0(:) = estruc(i,:)
-                nHges = p*mu/(bk*Tg)/muH
-                
-
-                do it=1,99
-                  nHges = p*mu/(bk*Tg)/muH
-                  if (model_eqcond) then
-                    call EQUIL_COND(nHges,Tg,eps,Sat,eldust,verbose)
-                  else
-                    eps(:) = eps0(:)
-                  endif  
-                  !print *, eps
-                  !print *,"yes"
-                  call GGCHEM(nHges,Tg,eps,.false.,0)
-                  kT = bk*Tg
-                  nges = nel
-                  mges = nel*mel
-                  do j=1,NELEM
-                    nges = nges + nat(j)
-                    mges = mges + nat(j)*mass(j)
-                  enddo
-                  do j=1,NMOLE
-                    nges = nges + nmol(j)
-                    mges = mges + nmol(j)*mmol(j)
-                  enddo
-                  pgas  = nges*bk*Tg
-                  ff    = p-pgas
-                  if (it==1) then
-                    muold = mu
-                    mu = nHges/pgas*(bk*Tg)*muH
-                    dmu = mu-muold
-                  else
-                    dfdmu = (ff-fold)/(mu-muold)
-                    dmu   = -ff/dfdmu
-                    muold = mu
-                    if ((dmu>0.0).or.ABS(dmu/mu)<0.7) then
-                      mu = muold+dmu
-                    else
-                      mu = nHges/pgas*(bk*Tg)*muH
-                    endif  
-                  endif
-                  fold = ff
-                  !print '("p-it=",i3,"  mu=",2(1pE20.12))',it,mu/amu,dmu/mu
-                  if (ABS(dmu/mu)<1.E-10) exit
-                enddo
-!
-
-
-            ! --- remove all condensates and put them in reservoir? ---
-             if (remove_condensates) then
-              fac = 1.Q+0
-              do j=1,NDUST
-                d_reservoir(j) = d_reservoir(j) + fac*eldust(j)
-                do jj=1,dust_nel(j)
-                  k = dust_el(j,jj)
-                  e_reservoir(k) = e_reservoir(k)  &
-                                + fac*dust_nu(j,jj)*eldust(j)
-                enddo
-              enddo  
-              do j=1,NELM
-                if (j==el) cycle 
-                k = elnum(j)
-                !print'(A3,2(1pE18.10))',elnam(k),eps(k)/eps00(k), &
-                !              (eps(k)+e_reservoir(k))/eps00(k)
+            do it=1,999
+              if (model_pconst) nHges = p*mu/(bk*Tg)/muH
+              if (model_eqcond) then
+                call EQUIL_COND(nHges,Tg,eps,Sat,eldust,verbose)
+              endif
+              call GGCHEM(nHges,Tg,eps,.false.,verb)
+              ngas = nel
+              !print *,'nat=',nat
+              do j=1,NELEM
+                ngas = ngas + nat(j)
               enddo
-              eps0(:) = eps(:) + (1.Q0-fac)*e_reservoir(:)
-              estruc(i+1,:) =  eps0(:)  ! for next layer
-              eldust(:) = d_reservoir(:)
-             endif  
-     
-             !--- compute supersat ratios and nucleation rates ---
-             call SUPERSAT(Tg,nat,nmol,Sat)
-             if (hasW) then
-              call NUCLEATION('W',Tg,dust_vol(iW),nat(W), &
-                            Sat(iW),Jstar,Nstar)
-             else
-              Jstar = 0
-              Nstar = 9.e+30
-             endif  
-     
-             !--- compute dust/gas density ratio ---
-             rhog  = nHges*muH
-             rhod  = 0.0
-             dustV = 0.0
-             do jj=1,NDUST
-              rhod  = rhod  + nHges*eldust(jj)*dust_mass(jj)
-              dustV = dustV + eldust(jj)*dust_Vol(jj)
-              out(jj) = LOG10(MIN(1.Q+300,MAX(1.Q-300,Sat(jj))))
-              if (ABS(Sat(jj)-1.Q0)<1.E-10) out(jj)=0.Q0
-             enddo  
+              do j=1,NMOLE
+                ngas = ngas + nmol(j)
+              enddo
 
+              !print *, it, ' ngas=', ngas,' nhges=', nHges
+              pgas  = ngas*bk*Tg
+              ff    = p-pgas
+              if (it==1) then
+                muold = mu
+                mu = nHges/pgas*(bk*Tg)*muH
+                dmu = mu-muold
+                if (.not.model_pconst) exit
+              else
+                dfdmu = (ff-fold)/(mu-muold)
+                dmu   = -ff/dfdmu
+                !write(98,'(I3,99(1pE14.7))') it,muold,mu,fold,ff,dfdmu,dmu/mu
+                muold = mu
+                if ((dmu>0.0).or.ABS(dmu/mu)<0.7) then
+                  mu = muold+dmu
+                else
+                  mu = nHges/pgas*(bk*Tg)*muH
+                endif  
+              endif
+              !write(*,'(I3,99(1pE16.7))') it,muold,mu,fold,ff,dfdmu,dmu/mu
+              fold = ff
+              !print '("p-it=",i3,"  mu=",2(1pE20.12))',it,mu/amu,dmu/mu
+              if (ABS(dmu/mu)<1.E-10) exit
+            enddo  
 
+            ngas = nel      ! cm-3
+            rhog = nel*mel  ! g cm-3
+            do j=1,NELEM
+              ngas = ngas + nat(j)
+              rhog = rhog + nat(j)*mass(j)
+            enddo
+            do j=1,NMOLE
+              ngas = ngas + nmol(j)
+              rhog = rhog + nmol(j)*mmol(j)
+            enddo
+            rhod = 0.d0     ! g cm-3  
+            Vcon = 0.d0     ! cm3
+            do i=1,NDUST
+              if (eldust(i)<=0.Q0) cycle 
+              rhod = rhod + nHges*eldust(i)*dust_mass(i)
+              Vcon = Vcon + nHges*eldust(i)*dust_Vol(i)
+            enddo  
+            mugas = rhog/ngas             ! mean molecular weight [g]
+            d2g   = rhod/rhog             ! dust/gas mass ratio [-]
+            rhoc  = rhod/Vcon             ! condensed matter density [g cm-3]
+            mcond = 1.0                   ! mass of condensates [= 1 g]
+            Vcond = mcond/rhoc            ! volume of condensates [cm3]
+            mgas  = mcond/d2g             ! mass of gas [g]
+            Vgas  = mgas/mugas*bk*Tg/pgas ! volume of gas [cm3]
+            !print*
+            !write(*,*) '----- bulk properties -----'
+            !print'("for Tg[K]=",0pF8.2," and n<H>[cm-3]=",1pE10.3)',Tg,nHges
+            !print'(16x,3(A12))',"condensates","gas","check"
+            !print'("         mass[g]",2(1pE12.4))',mcond,mgas
+            !print'("  density[g/cm3]",2(1pE12.4))',rhoc,rhog
+            !print'("tot.dens.[g/cm3]",12x,2(1pE12.4))',nHges*muH,(mcond+mgas)/Vgas
+            !print'("     volume[cm3]",2(1pE12.4))',Vcond,Vgas
+            !print'("   pressure[bar]",12x,1pE12.4)',pgas/bar
+            !print'("  el.press.[bar]",12x,1pE12.4)',nel*bk*Tg/bar
+            !print'(" mol.weight[amu]",12x,1pE12.4)', mugas/amu
+            !print'("         mu[amu]",12x,2(1pE12.4))', mu/amu,(mcond+mgas)/Vgas/pgas*(bk*Tg)/amu
+            !print'("        muH[amu]",12x,2(1pE12.4))',muH/amu,(mcond+mgas)/(nHges*Vgas)/amu
              !print'(i4," Tg[K] =",0pF8.2,"  n<H>[cm-3] =",1pE10.3)', &
              !        i,Tg,nHges
 
              !write(*,1010) ' Tg=',Tg,' n<H>=',nHges, &
              !                ' p=',pgas/bar,' mu=',mu/amu, &
              !                ' dust/gas=',rhod/rhog
+
              do jj=1,el-1
-              mol_out(jj,i) = real(nat(elnum(jj)),8)
+              mol_out(jj) = real(nat(elnum(jj)),8)/ngas
              enddo
              do jj=el+1,NELM
-              mol_out(jj,i) = real(nat(elnum(jj)),8)
+              mol_out(jj) = real(nat(elnum(jj)),8)/ngas
              enddo
              do jj=1,NMOLE
               !print *,cmol(jj),nmol(jj)
-              mol_out(NELM+jj,i) = real(nmol(jj),8)
+              mol_out(NELM+jj) = real(nmol(jj),8)/ngas
+              !write(*,4010) cmol(jj),nmol(jj),nmol(jj)/ngas
              enddo
              !mol_out(:,i) = mol_out(:,i)/sum(mol_out(:,i))
-            enddo
+             4010 format(' n',a8,1pE12.4,1pE13.3)
             !print *,cmol(1)
             !print *,mol_out(NELM+1,100)
             !1010 format(A4,0pF8.2,3(a6,1pE9.2),1(a11,1pE9.2))
