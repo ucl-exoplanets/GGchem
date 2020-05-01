@@ -820,13 +820,13 @@
           write(*,*) 'it, converge, ind =',it,converge(it),limit
           write(*,*) '  n<H>, T =',anhges,Tg
           write(*,*) 'from_merk,NewFastLevel=',from_merk,NewFastLevel
-          if (ifatal==0) then
-            chemiter  = chemiter + it
-            from_merk = .false.
-            ifatal  = 1
-            verbose = 2
-            goto 100        ! try again from scratch before giving up
-          endif  
+          ! if (ifatal==0) then
+          !   chemiter  = chemiter + it
+          !   from_merk = .false.
+          !   ifatal  = 1
+          !   verbose = 2
+          !   goto 100        ! try again from scratch before giving up
+          ! endif  
           goto 1000
         endif
         if (it>=5) then
