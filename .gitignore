@@ -143,4 +143,3 @@ venv.bak/
 taurex_ggchem/glue/fort_ggchemmodule.c
 taurex_ggchem/glue/fort_ggchem-f2pywrappers2.f90
 taurex_ggchem/.vscode/settings.json
-taurex_ggchem/external/data
