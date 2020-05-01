@@ -57,13 +57,6 @@ def build_ggchem():
     return build_fortran('fort_ggchem', sources,extra_compile_args=['-fdefault-real-8', '-fdefault-double-8', '-g','-O5'])
 import glob
 
-dispol = glob.glob('data/dispol_*')
-dust_chem = glob.glob('data/DustChem*.dat')
-
-
-
-data_files = ('taurex_ggchem/external/data', [*dispol, *dust_chem,'data/Abundances.dat'])
-
 
 entry_points = {'taurex.plugins': 'ggchem = taurex_ggchem'}
 
@@ -81,5 +74,6 @@ setup(name='taurex_ggchem',
       requires=requires,
       install_requires=install_requires,
       ext_modules=extensions,
-      data_files=[data_files],
+      package_data={'taurex_ggchem':['external/data/**']},
+
       )

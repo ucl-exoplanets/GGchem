@@ -575,7 +575,7 @@ module fort_ggchem
           subroutine run_ggchem(nnmol,tlayer,player,elem, mol_out)
             use PARAMETERS,ONLY: Tmin,Tmax,pmin,pmax,nHmin,nHmax,useDatabase, &
                                  model_eqcond,model_pconst,Npoints, &
-                                 remove_condensates, elements
+                                 remove_condensates, elements, verbose
              use CHEMISTRY,ONLY: NELM,NMOLE,elnum,cmol,catm,el,charge
              use DUST_DATA,ONLY: NELEM,NDUST,elnam,eps0,bk,bar,muH,amu, &
                                 dust_nel,dust_el,dust_nu,dust_nam,dust_mass, &
@@ -603,7 +603,7 @@ module fort_ggchem
              character(len=4) :: sup
              character(len=2) :: test3
              character(len=1) :: char
-             integer :: verbose=0,verb
+             integer :: verb
              logical :: isOK,hasW,same,TEAinterface=.false.
             
              do i=1,NDUST
@@ -641,6 +641,7 @@ module fort_ggchem
             
             mu    = muH
             eldust = 0.0
+            verbose = 0
             verb = verbose
         
 
@@ -659,7 +660,7 @@ module fort_ggchem
             do it=1,999
               if (model_pconst) nHges = p*mu/(bk*Tg)/muH
               if (model_eqcond) then
-                call EQUIL_COND(nHges,Tg,eps,Sat,eldust,verbose)
+                call EQUIL_COND(nHges,Tg,eps,Sat,eldust,verb)
               endif
               call GGCHEM(nHges,Tg,eps,.false.,verb)
               ngas = nel

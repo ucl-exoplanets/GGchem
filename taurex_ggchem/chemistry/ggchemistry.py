@@ -3,6 +3,8 @@ import numpy as np
 import taurex_ggchem.external.fort_ggchem as fchem 
 import os
 from taurex.core import fitparam
+import pkg_resources
+
 selected = ['H','He','C', 'N', 'O', 'Na', 'Mg', 'Si', 'Fe', 'Al', 'Ca', 'Ti', 'S', 'Cl', 'K', 'Li', 'F', 'P', 'V', 'Cr', 'Mn', 'Ni', 'Zr', 'W']
 
 class GGChem(Chemistry):
@@ -44,7 +46,7 @@ class GGChem(Chemistry):
          
         self._he_h_ratio = he_h_ratio
         self._metallicity = metallicity
-        self._base_data_path = os.path.join(os.path.abspath(os.path.dirname(fchem.__file__)),'data')
+        self._base_data_path = pkg_resources.resource_filename('taurex_ggchem','external/data')
 
         self._charge = 'el' in elements
 
