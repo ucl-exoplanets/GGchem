@@ -41,6 +41,7 @@
           j2 = index(zeile,trim(trivial(NDUST)))
      &       + len(trim(trivial(NDUST)))
           read(zeile(j2+1:),*) Tmelt(NDUST)
+
           trivial(NDUST)=' '
         endif
         read(12,*) dust_rho(NDUST)
@@ -199,8 +200,8 @@
       use DUST_DATA,ONLY: qp,NELEM,NDUST,dust_nam,Tmelt,Tcorr,is_liquid
       implicit none
       real*8 :: T
-      real*8 :: nat(NELEM),nmol(NMOLE),Sat(NDUST)
-      real*8 :: old,new,S(NDUST,10000)
+      real*16 :: nat(NELEM),nmol(NMOLE),Sat(NDUST)
+      real*16 :: old,new,S(NDUST,10000)
       integer :: i,j,k,iT,Ncheck,il,is
       integer :: iliq(NDUST),isol(NDUST)
       character(len=15) :: search
