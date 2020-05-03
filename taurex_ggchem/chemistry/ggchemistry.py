@@ -3,7 +3,10 @@ import numpy as np
 import taurex_ggchem.external.fort_ggchem as fchem 
 import os
 from taurex.core import fitparam
+#from taurex.util.fortran import FortranSafeCaller
 import pkg_resources
+from taurex.util.fortran import SafeFortranCaller, FortranStopException
+from taurex.exceptions import InvalidModelException
 
 selected = ['H','He','C', 'N', 'O', 'Na', 'Mg', 'Si', 'Fe', 'Al', 'Ca', 'Ti', 'S', 'Cl', 'K', 'Li', 'F', 'P', 'V', 'Cr', 'Mn', 'Ni', 'Zr', 'W']
 
@@ -30,8 +33,50 @@ class GGChem(Chemistry):
                  Tfast=1000,
                  new_back_it=6,  
                  new_back_fac=1e5,
-                 new_pre_method=2, new_full_it=True, new_fast_level=1):
+                 new_pre_method=2, 
+                 new_full_it=True, 
+                 new_fast_level=1):
         super().__init__(self.__class__.__name__)
+
+        self._init_dispol_files = dispol_files
+        self._init_abundance_profile = abundance_profile
+        self._init_selected_elements = selected_elements
+        self._init_ratio_elements = ratio_elements
+        self._init_ratios_to_O = ratios_to_O
+        self._init_he_h_ratio = he_h_ratio
+        self._init_metallicity = metallicity
+        self._init_include_charge = include_charge
+        self._init_equilibrium_condensation = equilibrium_condensation
+        self._init_dustchem_file = dustchem_file
+        self._init_Tfast = Tfast
+        self._init_new_back_it = new_back_it
+        self._init_new_back_fac = new_back_fac
+        self._init_new_pre_method = new_pre_method
+        self._init_new_full_it = new_full_it
+        self._init_new_fast_level = new_fast_level
+
+        self._safe_caller = SafeFortranCaller(fchem.__name__)
+        self.reinitialize_ggchem()
+
+    def reinitialize_ggchem(self):
+
+        dispol_files = self._init_dispol_files
+        abundance_profile = self._init_abundance_profile
+        selected_elements = self._init_selected_elements
+        ratio_elements = self._init_ratio_elements
+        ratios_to_O = self._init_ratios_to_O
+        he_h_ratio = self._init_he_h_ratio
+        metallicity = self._init_metallicity
+        include_charge = self._init_include_charge
+        equilibrium_condensation = self._init_equilibrium_condensation
+        dustchem_file = self._init_dustchem_file
+        Tfast = self._init_Tfast
+        new_back_it = self._init_new_back_it
+        new_back_fac = self._init_new_back_fac
+        new_pre_method = self._init_new_pre_method
+        new_full_it = self._init_new_full_it
+        new_fast_level = self._init_new_fast_level
+
 
         elements = [s.strip() for s in selected_elements]
         if 'O' not in elements:
@@ -43,7 +88,9 @@ class GGChem(Chemistry):
 
         if include_charge:
             elements.append('el')
-         
+        
+
+
         self._he_h_ratio = he_h_ratio
         self._metallicity = metallicity
         self._base_data_path = pkg_resources.resource_filename('taurex_ggchem','external/data')
@@ -64,22 +111,22 @@ class GGChem(Chemistry):
         elements = [s.strip() for s in elements if s in self.allowed_elements]
 
 
-        fchem.chemistry.newfullit    = new_full_it
-        fchem.chemistry.newbackit    = new_back_it
-        fchem.chemistry.newbackfac   = new_back_fac
-        fchem.chemistry.newfastlevel = new_fast_level
-        fchem.chemistry.newpremethod = new_pre_method
+        self._safe_caller.set_val('chemistry.newfullit',new_full_it)
+        self._safe_caller.set_val('chemistry.newbackit',new_back_it)
+        self._safe_caller.set_val('chemistry.newbackfac',new_back_fac)
+        self._safe_caller.set_val('chemistry.newfastlevel',new_fast_level)
+        self._safe_caller.set_val('chemistry.newpremethod',new_pre_method)
 
 
 
         self._passed_elements = elements
         self._elements = elements
-        fchem.parameters.verbose = 0
-        self._initial_abundances = fchem.fort_ggchem.init_lean()
+        self._safe_caller.set_val('parameters.verbose',0)
+        self._initial_abundances = self._safe_caller.call('fort_ggchem.init_lean')
 
 
 
-        fchem.parameters.initchem_info = False
+        self._safe_caller.set_val('parameters.initchem_info', False)
 
         if dispol_files is None:
             dispol_files = [os.path.join(self._base_data_path,s) for s in ['dispol_BarklemCollet.dat',
@@ -87,39 +134,28 @@ class GGChem(Chemistry):
                                                                            'dispol_WoitkeRefit.dat',
                                                                     ]]
                                                             
-        fchem.parameters.elements = ' '.join([s.ljust(2) for s in elements]).ljust(200)
+        self._safe_caller.set_val('parameters.elements', ' '.join([s.ljust(2) for s in elements]).ljust(200))
         #print('ELEMENTS',fchem.parameters.elements)
         self.info('Elements in system: %s',elements)
         dispol = [s.ljust(200) for s in dispol_files]  
 
 
         self.info('Initializing GGchemistry')
-        fchem.fort_ggchem.init_taurex_chemistry(dispol,self._charge)
-        #print(fchem.chemistry.nelm)
-        #quit()
-
-
-        # _atms = fchem.fort_ggchem.copy_atom_names(fchem.chemistry.nelm) 
-        # atms = np.lib.stride_tricks.as_strided(_atms, strides=(_atms.shape[1],1))
-
-        # atms = [s[0].decode('utf-8') for s in np.char.strip(atms.view('S2'))]
-
-        # self._elements = atms
-        # self._passed_elements = atms
+        self._safe_caller.call('fort_ggchem.init_taurex_chemistry',dispol,self._charge)
         
         self.setup_abundances(abundance_profile)
         self.setup_ratios(ratio_elements,ratios_to_O)
 
-        #quit()
-        # self.update_abundances()
-        fchem.parameters.model_eqcond = equilibrium_condensation
+        self._safe_caller.set_val('parameters.model_eqcond',equilibrium_condensation)
 
-        fchem.parameters.tfast = Tfast
+        self._safe_caller.set_val('parameters.tfast',Tfast)
 
         self.info('T-fast %s K',Tfast)
         self.info('Eq. Condensation: %s', equilibrium_condensation)
 
-        _mols = fchem.fort_ggchem.copy_molecule_names(fchem.chemistry.nmole) 
+        nmole = self._safe_caller.get_val('chemistry.nmole')
+
+        _mols = self._safe_caller.call('fort_ggchem.copy_molecule_names',nmole) 
         mols = np.lib.stride_tricks.as_strided(_mols, strides=(_mols.shape[1],1))
 
         mols = [s[0].decode('utf-8') for s in np.char.strip(mols.view('S20'))]
@@ -133,8 +169,8 @@ class GGChem(Chemistry):
             dustchem_file = os.path.join(self._base_data_path,'DustChem.dat')
 
         self.info('Loading dustchem file %s',dustchem_file)
-        fchem.dust_data.dustchem_file = dustchem_file.ljust(200)   
-        fchem.init_dustchem_taurex()
+        self._safe_caller.set_val('dust_data.dustchem_file', dustchem_file.ljust(200))
+        self._safe_caller.call('init_dustchem_taurex')
 
         #quit()
         # self.update_abundances()
@@ -209,7 +245,11 @@ class GGChem(Chemistry):
             self.info('%s %s',met, rat)
 
     def get_element_index(self, element):
-        return fchem.chemistry.elnum[int(getattr(fchem.chemistry,element.strip().lower()))-1]-1
+        elnums = self._safe_caller.get_val('chemistry.elnum')
+        index = self._safe_caller.get_val(f'chemistry.{element.strip().lower()}')
+
+
+        return elnums[index-1]-1
         #return self.get_element_index(element)
 
 
@@ -219,7 +259,7 @@ class GGChem(Chemistry):
         inactive_mols =[]
         active_indices = []
         inactive_indices = []
-        nmol = fchem.chemistry.nmole 
+        nmol = self._safe_caller.get_val('chemistry.nmole')
 
         for idx,m in enumerate(self._elements + self._molecules):
             if m in self.availableActive:
@@ -277,9 +317,13 @@ class GGChem(Chemistry):
         #fchem.structure.tgas[:nlayers] = temperature_profile
         #fchem.structure.press[:nlayers] = pressure_profile*10 # to dyn/cm2
         self.info('Running GGChem equilibrium code...')
-        nmol = fchem.chemistry.nmole 
-        nelem = fchem.chemistry.nelm 
-        mols = [fchem.fort_ggchem.run_ggchem(nelem+nmol,t,p*10,ab) for t,p in zip(temperature_profile,pressure_profile) ]
+        nmol = self._safe_caller.get_val('chemistry.nmole')
+        nelem = self._safe_caller.get_val('chemistry.nelm')
+        try:
+            mols = [self._safe_caller.call('fort_ggchem.run_ggchem',nelem+nmol,t,p*10,ab) 
+                    for t,p in zip(temperature_profile,pressure_profile)]
+        except FortranStopException:
+            raise InvalidModelException('GGChem most likely STOPPED due to a error')
         self._mols = np.stack(mols).T
         #self._vmr = mols/np.sum(mols,axis=0)
         #self._vmr = self._mols
