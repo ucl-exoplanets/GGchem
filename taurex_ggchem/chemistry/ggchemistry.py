@@ -55,7 +55,7 @@ class GGChem(Chemistry):
         self._init_new_full_it = new_full_it
         self._init_new_fast_level = new_fast_level
 
-        self._safe_caller = SafeFortranCaller(fchem.__name__)
+        self._safe_caller = SafeFortranCaller(fchem.__name__,logger=self)
         self.reinitialize_ggchem()
 
     def reinitialize_ggchem(self):
