@@ -323,6 +323,7 @@ class GGChem(Chemistry):
             mols = [self._safe_caller.call('fort_ggchem.run_ggchem',nelem+nmol,t,p*10,ab) 
                     for t,p in zip(temperature_profile,pressure_profile)]
         except FortranStopException:
+            self.reinitialize_ggchem()
             raise InvalidModelException('GGChem most likely STOPPED due to a error')
         self._mols = np.stack(mols).T
         #self._vmr = mols/np.sum(mols,axis=0)
