@@ -603,7 +603,7 @@
         enddo 
         if (verbose>1) print'("corr",99(1pE11.2))',
      >                 pcorr(enew,act_to_all(1:Nact))
-        !if (verbose>1) read(*,'(A1)') char
+        if (verbose>1) read(*,'(A1)') char
       enddo  
 *
 *     ! redo electron density
@@ -845,7 +845,7 @@
           Nact = Nact-j
         endif  
         it = it + 1
-        !if (verbose.gt.1) read(*,'(a1)') char
+        if (verbose.gt.1) read(*,'(a1)') char
         if (crit>finish.and.Nact>0) goto 300       ! continue iterating
 *
 *       ! redo rare elements
@@ -1004,7 +1004,7 @@
       if (verbose.gt.0) print'("number of pre-iterations",I4,
      &     " -- used saved initial guesses",0pF5.1,"%")',
      &     NpreIt,REAL(Ntaken)/REAL(Nestim+1)*100
-     ! if (verbose.gt.1) read(*,'(a1)') char
+     if (verbose.gt.1) read(*,'(a1)') char
 
 !$omp critical(counters)
       chemcall = chemcall + 1
