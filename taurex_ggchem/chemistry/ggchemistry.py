@@ -57,7 +57,7 @@ class GGChem(Chemistry):
 
         self._safe_caller = SafeFortranCaller(fchem.__name__,logger=self)
         self.reinitialize_ggchem()
-
+        self.add_ratio_params()
     def reinitialize_ggchem(self):
 
         dispol_files = self._init_dispol_files
@@ -176,7 +176,7 @@ class GGChem(Chemistry):
         # self.update_abundances()
 
         self._setup_active_inactive()
-        self.add_ratio_params()
+
 
     def setup_abundances(self, profile):
         
