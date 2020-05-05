@@ -322,7 +322,7 @@ class GGChem(Chemistry):
         nmol = self._safe_caller.get_val('chemistry.nmole')
         nelem = self._safe_caller.get_val('chemistry.nelm')
         mols = []
-        for t,p in zip(temperature_profile,pressure_profile)
+        for t,p in zip(temperature_profile,pressure_profile):
             try:
                 mols.append(self._safe_caller.call('fort_ggchem.run_ggchem',nelem+nmol,t,p*10,ab) )
             except FortranStopException:
