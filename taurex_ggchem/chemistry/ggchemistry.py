@@ -321,12 +321,14 @@ class GGChem(Chemistry):
         self.info('Running GGChem equilibrium code...')
         nmol = self._safe_caller.get_val('chemistry.nmole')
         nelem = self._safe_caller.get_val('chemistry.nelm')
-        try:
-            mols = [self._safe_caller.call('fort_ggchem.run_ggchem',nelem+nmol,t,p*10,ab) 
-                    for t,p in zip(temperature_profile,pressure_profile)]
-        except FortranStopException:
-            self.reinitialize_ggchem()
-            raise InvalidModelException('GGChem most likely STOPPED due to a error')
+        mols = []
+        for t,p in zip(temperature_profile,pressure_profile)
+            try:
+                mols.append(self._safe_caller.call('fort_ggchem.run_ggchem',nelem+nmol,t,p*10,ab) )
+            except FortranStopException:
+                self.critical('Error occured in Z:%s ratios:%s T:%s P:%s',self._metallicity,self._ratios,t,p)
+                self.reinitialize_ggchem()
+                raise InvalidModelException('GGChem most likely STOPPED due to a error')
         self._mols = np.stack(mols).T
         #self._vmr = mols/np.sum(mols,axis=0)
         #self._vmr = self._mols
