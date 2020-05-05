@@ -85,6 +85,11 @@
 *-----------------------------------------------------------------------      
 
       ifatal = 0
+      
+      if (allocated(amerk)) then
+        deallocate(badness,pcorr,pkey,amerk,ansave)
+      endif
+
       if (.not.allocated(amerk)) then
         allocate(badness(nel),pcorr(nel,nel),pkey(nel),
      >           amerk(nel),ansave(nel))
