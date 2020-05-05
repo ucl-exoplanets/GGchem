@@ -57,6 +57,8 @@ class GGChem(Chemistry):
 
         self._safe_caller = SafeFortranCaller(fchem.__name__,logger=self)
         self.reinitialize_ggchem()
+        self.restore_molecule_names()
+        self._setup_active_inactive()
         self.add_ratio_params()
     def reinitialize_ggchem(self):
 
@@ -163,7 +165,7 @@ class GGChem(Chemistry):
         self._molecules = mols
 
 
-        self.restore_molecule_names()
+
 
         if dustchem_file is None:
             dustchem_file = os.path.join(self._base_data_path,'DustChem.dat')
@@ -175,7 +177,7 @@ class GGChem(Chemistry):
         #quit()
         # self.update_abundances()
 
-        self._setup_active_inactive()
+
 
 
     def setup_abundances(self, profile):
