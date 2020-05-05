@@ -326,7 +326,7 @@ class GGChem(Chemistry):
             try:
                 mols.append(self._safe_caller.call('fort_ggchem.run_ggchem',nelem+nmol,t,p*10,ab) )
             except FortranStopException:
-                self.critical('Error occured in Z:%s ratios:%s T:%s P:%s',self._metallicity,self._ratios,t,p)
+                self.warning('Error occured in Z:%s ratios:%s T:%s P:%s',self._metallicity,self._ratios,t,p)
                 self.reinitialize_ggchem()
                 raise InvalidModelException('GGChem most likely STOPPED due to a error')
         self._mols = np.stack(mols).T
