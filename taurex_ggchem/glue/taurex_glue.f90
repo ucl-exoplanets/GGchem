@@ -615,6 +615,7 @@ module fort_ggchem
             
 
             eps   = real(elem(:),qp)
+            eps0 = real(elem(:),qp)
 
             !write(*,*) 
             !write(*,*) "elemental abundances and masses ..."
