@@ -315,7 +315,7 @@ class GGChem(Chemistry):
 
 
         #print(ab)
-        self.reinitialize_ggchem()
+        #self.reinitialize_ggchem()
         ab = self.update_abundances()
         #fchem.structure.tgas[:nlayers] = temperature_profile
         #fchem.structure.press[:nlayers] = pressure_profile*10 # to dyn/cm2
@@ -329,6 +329,7 @@ class GGChem(Chemistry):
             except FortranStopException:
                 self.warning('Error occured in Z:%s ratios:%s T:%s P:%s',self._metallicity,self._ratios,t,p)
                 self._safe_caller.cleanup()
+                self.reinitialize_ggchem()
                 raise InvalidModelException('GGChem most likely STOPPED due to a error')
         self._mols = np.stack(mols).T
         #self._vmr = mols/np.sum(mols,axis=0)
