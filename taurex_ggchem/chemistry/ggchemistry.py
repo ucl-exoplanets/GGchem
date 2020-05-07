@@ -5,7 +5,6 @@ import os
 from taurex.core import fitparam
 import pkg_resources
 from taurex.util.fortran import stdout_redirector
-from queue import Full
 selected = ['H','He','C', 'N', 'O', 'Na', 'Mg', 'Si', 'Fe', 'Al', 'Ca', 'Ti', 'S', 'Cl', 'K', 'Li', 'F', 'P', 'V', 'Cr', 'Mn', 'Ni', 'Zr', 'W']
 
 
@@ -20,10 +19,7 @@ class StreamToLogger:
 
             if isinstance(out, bytes):
                 out = out.decode('utf-8')
-            try:
-                self.logger.info(buf)
-            except Full:
-                pass
+            self.logger.info(buf)
 
 
 class GGChem(Chemistry):
