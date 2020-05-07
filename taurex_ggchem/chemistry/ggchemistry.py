@@ -311,11 +311,12 @@ class GGChem(Chemistry):
     def initialize_chemistry(self, nlayers=100, temperature_profile=None,
                              pressure_profile=None, altitude_profile=None):
         from taurex.constants import KBOLTZ
-        ab = self.update_abundances()
+
 
 
         #print(ab)
-
+        self.reinitialize_ggchem()
+        ab = self.update_abundances()
         #fchem.structure.tgas[:nlayers] = temperature_profile
         #fchem.structure.press[:nlayers] = pressure_profile*10 # to dyn/cm2
         self.info('Running GGChem equilibrium code...')
@@ -327,7 +328,7 @@ class GGChem(Chemistry):
                 mols.append(self._safe_caller.call('fort_ggchem.run_ggchem',nelem+nmol,t,p*10,ab) )
             except FortranStopException:
                 self.warning('Error occured in Z:%s ratios:%s T:%s P:%s',self._metallicity,self._ratios,t,p)
-                self.reinitialize_ggchem()
+                self._safe_caller.cleanup()
                 raise InvalidModelException('GGChem most likely STOPPED due to a error')
         self._mols = np.stack(mols).T
         #self._vmr = mols/np.sum(mols,axis=0)
