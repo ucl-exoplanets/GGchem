@@ -19,7 +19,7 @@ class StreamToLogger:
 
             if isinstance(out, bytes):
                 out = out.decode('utf-8')
-            self.logger.info(buf)
+            self.logger.debug(buf)
 
 
 class GGChem(Chemistry):
