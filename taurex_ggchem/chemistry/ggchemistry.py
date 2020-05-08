@@ -45,7 +45,7 @@ class GGChem(Chemistry):
                  Tfast=1000,
                  new_back_it=6,  
                  new_back_fac=1e5,
-                 new_pre_method=2, new_full_it=True, new_fast_level=1):
+                 new_pre_method=2, new_full_it=False, new_fast_level=1):
         super().__init__(self.__class__.__name__)
 
 

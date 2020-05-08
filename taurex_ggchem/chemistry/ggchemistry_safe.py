@@ -34,7 +34,7 @@ class GGChemSafe(Chemistry):
                  new_back_it=6,  
                  new_back_fac=1e5,
                  new_pre_method=2, 
-                 new_full_it=True, 
+                 new_full_it=False, 
                  new_fast_level=1):
         super().__init__(self.__class__.__name__)
 
@@ -327,7 +327,7 @@ class GGChemSafe(Chemistry):
             try:
                 mols.append(self._safe_caller.call('fort_ggchem.run_ggchem',nelem+nmol,t,p*10,ab) )
             except FortranStopException:
-                self.warning('Error occured in Z:%s ratios:%s T:%s P:%s',self._metallicity,self._ratios,t,p)
+                #self.warning('Error occured in Z:%s ratios:%s T:%s P:%s',self._metallicity,self._ratios,t,p)
                 self._safe_caller.cleanup()
                 self.reinitialize_ggchem()
                 raise InvalidModelException('GGChem most likely STOPPED due to a error')
