@@ -16,7 +16,7 @@ class GGChemSafe(Chemistry):
 
     allowed_elements = ['H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg', 'Al', 'Si', 
                         'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 
-                        'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'W',]
+                        'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'W']
 
     element_index_dict = dict(zip(allowed_elements[1:],range(0,len(allowed_elements))))
 
@@ -88,16 +88,12 @@ class GGChemSafe(Chemistry):
         if 'H' not in elements:
             elements.insert(0,'H')
 
-        if include_charge:
-            elements.append('el')
         
 
 
         self._he_h_ratio = he_h_ratio
         self._metallicity = metallicity
         self._base_data_path = pkg_resources.resource_filename('taurex_ggchem','external/data')
-
-        self._charge = 'el' in elements
 
         self.info('Using GGChem chemistry')
 
@@ -106,12 +102,14 @@ class GGChemSafe(Chemistry):
         if len(ignored_elements) > 0:
             self.info('Elements ignored: %s',ignored_elements)
 
-        if self._charge:
-            self.info('Ions activated')
+            
 
 
         elements = [s.strip() for s in elements if s in self.allowed_elements]
-
+        if include_charge:
+            self._charge = include_charge
+            elements.append('el')
+            self.info('Ions activated')
 
         self._safe_caller.set_val('chemistry.newfullit',new_full_it)
         self._safe_caller.set_val('chemistry.newbackit',new_back_it)
@@ -134,8 +132,7 @@ class GGChemSafe(Chemistry):
             dispol_files = [os.path.join(self._base_data_path,s) for s in ['dispol_BarklemCollet.dat',
                                                                            'dispol_StockKitzmann_withoutTsuji.dat',
                                                                            'dispol_WoitkeRefit.dat',
-                                                                    ]]
-                                                            
+                                                                    ]]                        
         self._safe_caller.set_val('parameters.elements', ' '.join([s.ljust(2) for s in elements]).ljust(200))
         #print('ELEMENTS',fchem.parameters.elements)
         self.info('Elements in system: %s',elements)
@@ -263,7 +260,9 @@ class GGChemSafe(Chemistry):
         inactive_indices = []
         nmol = self._safe_caller.get_val('chemistry.nmole')
 
-        for idx,m in enumerate(self._elements + self._molecules):
+        clean_elements =[ el if el != 'el' else 'e-' for el in self._elements]
+
+        for idx,m in enumerate(clean_elements + self._molecules):
             if m in self.availableActive:
                 active_mols.append(m)
                 active_indices.append(idx)

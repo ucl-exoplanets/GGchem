@@ -741,10 +741,14 @@ module fort_ggchem
              !write(*,1010) ' Tg=',Tg,' n<H>=',nHges, &
              !                ' p=',pgas/bar,' mu=',mu/amu, &
              !                ' dust/gas=',rhod/rhog
-
+            !print *,'ELNUM',elnum(el)
              do jj=1,el-1
               mol_out(jj) = real(nat(elnum(jj)),8)/ngas
              enddo
+             if (charge) then
+              mol_out(el) = real(nel,8)/ngas
+             endif
+
              do jj=el+1,NELM
               mol_out(jj) = real(nat(elnum(jj)),8)/ngas
              enddo
