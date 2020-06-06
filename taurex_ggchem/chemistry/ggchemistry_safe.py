@@ -110,7 +110,8 @@ class GGChemSafe(Chemistry):
             self._charge = include_charge
             elements.append('el')
             self.info('Ions activated')
-
+        else:
+            self._charge = False
         self._safe_caller.set_val('chemistry.newfullit',new_full_it)
         self._safe_caller.set_val('chemistry.newbackit',new_back_it)
         self._safe_caller.set_val('chemistry.newbackfac',new_back_fac)
