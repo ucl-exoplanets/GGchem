@@ -10,7 +10,7 @@ from taurex.exceptions import InvalidModelException
 
 selected = ['H','He','C', 'N', 'O', 'Na', 'Mg', 'Si', 'Fe', 'Al', 'Ca', 'Ti', 'S', 'Cl', 'K', 'Li', 'F', 'P', 'V', 'Cr', 'Mn', 'Ni', 'Zr', 'W']
 
-class GGChemSafe(Chemistry):
+class GGChem(Chemistry):
 
 
 

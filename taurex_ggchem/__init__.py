@@ -1,2 +1,2 @@
-from taurex_ggchem.chemistry.ggchemistry import GGChem
-from taurex_ggchem.chemistry.ggchemistry_safe import GGChemSafe
+from taurex_ggchem.chemistry.ggchemistry import GGChemNonSafe
+from taurex_ggchem.chemistry.ggchemistry_safe import GGChem

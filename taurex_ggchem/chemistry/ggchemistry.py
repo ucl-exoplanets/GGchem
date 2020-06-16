@@ -22,7 +22,7 @@ class StreamToLogger:
             self.logger.debug(buf)
 
 
-class GGChem(Chemistry):
+class GGChemNonSafe(Chemistry):
 
 
 
