@@ -264,22 +264,31 @@ python module fort_ggchem ! in
                 integer intent(in) :: nmole
                 character dimension(nmole,20),intent(out,c),depend(nmole) :: t_cmol
             end subroutine copy_molecule_names
+
+            subroutine copy_dust_names(ndust,t_dustname) ! in :fort_ggchem:glue/taurex_glue.f90:fort_ggchem
+                use dust_data, only: dust_nam
+                integer intent(in) :: ndust
+                character dimension(ndust,20),intent(out,c),depend(ndust) :: t_dustname
+            end subroutine copy_dust_names
+
             subroutine copy_atom_names(nelm,t_cmol) ! in :fort_ggchem:glue/taurex_glue.f90:fort_ggchem
                 use chemistry, only: catm
                 integer intent(in) :: nelm
                 character dimension(nelm,2),intent(out,c),depend(nelm) :: t_cmol
             end subroutine copy_atom_names
-            subroutine run_ggchem(nnmol,tlayer,player,elem,mol_out) ! in :fort_ggchem:glue/taurex_glue.f90:fort_ggchem
+            subroutine run_ggchem(nnmol,nndust,tlayer,player,elem,mol_out,cond_out) ! in :fort_ggchem:glue/taurex_glue.f90:fort_ggchem
                 use parameters, only: tmin,tmax,pmin,pmax,nhmin,nhmax,usedatabase,model_eqcond,model_pconst,npoints,remove_condensates,elements
                 use chemistry, only: nelm,nmole,elnum,cmol,catm,el,charge
                 use dust_data, only: nelem,ndust,elnam,eps0,bk,bar,muh,amu,dust_nel,dust_el,dust_nu,dust_nam,dust_mass,dust_vol,mass,mel
                 use structure, only: npmax,tgas,press,pelec,dens,nhtot,estruc
                 use exchange, only: nel,nat,nion,nmol,mmol,h,c,n,o,w,s,ca,si,mg,al,fe
                 integer intent(in) :: nnmol
+                integer intent(in) :: nndust
                 real*8 dimension(41), intent(in) :: elem
                 real*8 intent(in) :: tlayer
                 real*8 intent(in) :: player
                 real*8 dimension(nnmol),intent(out),depend(nnmol) :: mol_out
+                real*8 dimension(nndust),intent(out),depend(nndust) :: cond_out
             end subroutine run_ggchem
         end module fort_ggchem
     end interface 

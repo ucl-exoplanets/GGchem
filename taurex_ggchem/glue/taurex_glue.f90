@@ -560,6 +560,19 @@ module fort_ggchem
 
           end subroutine
 
+          subroutine copy_dust_names(ndust,t_dustname)
+            use DUST_DATA, ONLY: dust_nam
+            
+            integer, intent(in) :: ndust
+            CHARACTER*20, intent(out), dimension(ndust) :: t_dustname
+            integer :: ido
+            do ido=1,ndust
+              t_dustname(ido) = dust_nam(ido)
+            enddo
+
+          end subroutine
+
+
           subroutine copy_atom_names(nelm,t_cmol)
             use CHEMISTRY,ONLY: catm
             
@@ -572,7 +585,7 @@ module fort_ggchem
 
           end subroutine
 
-          subroutine run_ggchem(nnmol,tlayer,player,elem, mol_out)
+          subroutine run_ggchem(nnmol, nndust, tlayer,player,elem, mol_out, cond_out)
             use PARAMETERS,ONLY: Tmin,Tmax,pmin,pmax,nHmin,nHmax,useDatabase, &
                                  model_eqcond,model_pconst,Npoints, &
                                  remove_condensates, elements, verbose
@@ -585,13 +598,14 @@ module fort_ggchem
                                H,C,N,O,W,S,Ca,Si,Mg,Al,Fe
              implicit none
              integer,parameter :: qp =16
-             integer, intent(in) :: nnmol
+             integer, intent(in) :: nnmol, nndust
              real*8, intent(in) :: elem(41)
              real*8, intent(out) :: mol_out(nNMOL)
+             real*8, intent(out) :: cond_out(nndust)
              real*8, intent(in) :: Tlayer
              real*8, intent(in) :: player
              real*8 :: p,Tg, nHges, pgas
-             real*8  :: rhog,rhoc,rhod,d2g,mcond,mgas,Vcon,Vcond,Vgas,ngas, mugas
+             real*16  :: rhog,rhoc,rhod,d2g,mcond,mgas,Vcon,Vcond,Vgas,ngas, mugas, Vtot
              real*8 :: ff,fold,dmu,dfdmu
              real*8 :: nTEA,pTEA,mu,muold,Jstar,Nstar
              real(kind=qp) :: eps(NELEM),eps00(NELEM)
@@ -715,13 +729,20 @@ module fort_ggchem
               rhod = rhod + nHges*eldust(i)*dust_mass(i)
               Vcon = Vcon + nHges*eldust(i)*dust_Vol(i)
             enddo  
+
+            pgas  = ngas*bk*Tg
             mugas = rhog/ngas             ! mean molecular weight [g]
             d2g   = rhod/rhog             ! dust/gas mass ratio [-]
             rhoc  = rhod/Vcon             ! condensed matter density [g cm-3]
             mcond = 1.0                   ! mass of condensates [= 1 g]
             Vcond = mcond/rhoc            ! volume of condensates [cm3]
             mgas  = mcond/d2g             ! mass of gas [g]
+            if (d2g == 0) mgas = mugas
             Vgas  = mgas/mugas*bk*Tg/pgas ! volume of gas [cm3]
+            if (Vcond /= Vcond)  Vcond = 0.Q0
+            Vtot = Vgas + Vcond
+            !print *,mugas,mgas,pgas,rhog, Vgas,Vcond, Vtot
+            !print *,Vgas,Vtot, Vgas/Vtot,Vcond/Vtot
             !print*
             !write(*,*) '----- bulk properties -----'
             !print'("for Tg[K]=",0pF8.2," and n<H>[cm-3]=",1pE10.3)',Tg,nHges
@@ -743,19 +764,26 @@ module fort_ggchem
              !                ' dust/gas=',rhod/rhog
             !print *,'ELNUM',elnum(el)
              do jj=1,el-1
-              mol_out(jj) = real(nat(elnum(jj)),8)/ngas
+              mol_out(jj) = real(nat(elnum(jj))/ngas*Vgas/Vtot,8)
              enddo
              if (charge) then
-              mol_out(el) = real(nel,8)/ngas
+              mol_out(el) = real((nel/ngas)*Vgas/Vtot,8)
              endif
 
              do jj=el+1,NELM
-              mol_out(jj) = real(nat(elnum(jj)),8)/ngas
+              mol_out(jj) = real(nat(elnum(jj))/ngas*Vgas/Vtot,8)
              enddo
              do jj=1,NMOLE
               !print *,cmol(jj),nmol(jj)
-              mol_out(NELM+jj) = real(nmol(jj),8)/ngas
+              mol_out(NELM+jj) = real(nmol(jj)/ngas*Vgas/Vtot,8)
               !write(*,4010) cmol(jj),nmol(jj),nmol(jj)/ngas
+             enddo
+             
+             cond_out(:) = 0.0
+
+             do jj=1,NDUST
+              if (eldust(jj)<=0.Q0 .or. Vcon <=0.Q0) cycle 
+                cond_out(jj) = (real(eldust(jj))*dust_Vol(jj)*nHges/Vcon)*Vcond/Vtot
              enddo
              !mol_out(:,i) = mol_out(:,i)/sum(mol_out(:,i))
              4010 format(' n',a8,1pE12.4,1pE13.3)

@@ -172,11 +172,45 @@ class GGChem(Chemistry):
         self._safe_caller.set_val('dust_data.dustchem_file', dustchem_file.ljust(200))
         self._safe_caller.call('init_dustchem_taurex')
 
+        ndust = self._safe_caller.get_val('dust_data.ndust')
+
+        _dust = self._safe_caller.call('fort_ggchem.copy_dust_names',ndust) 
+        dust = np.lib.stride_tricks.as_strided(_dust, strides=(_dust.shape[1],1))
+
+        dust = [s[0].decode('utf-8') for s in np.char.strip(dust.view('S20'))]
+
+        self._condensates = dust
+
+
         #quit()
         # self.update_abundances()
 
+    @property
+    def condensates(self):
+        """
+        Returns a list of condensates in the atmosphere.
+
+        Returns
+        -------
+        active : :obj:`list`
+            List of condensates
+
+        """
+
+        return self._condensates
 
 
+    @property
+    def condensateMixProfile(self):
+        """
+        **Requires implementation**
+
+        Should return profiles of shape ``(ncondensates,nlayers)``.
+        """
+        if len(self.condensates) == 0:
+            return None
+        else:
+            return self._dust
 
     def setup_abundances(self, profile):
         
@@ -322,16 +356,21 @@ class GGChem(Chemistry):
         self.info('Running GGChem equilibrium code...')
         nmol = self._safe_caller.get_val('chemistry.nmole')
         nelem = self._safe_caller.get_val('chemistry.nelm')
+        ndust = self._safe_caller.get_val('dust_data.ndust')
         mols = []
+        dust = []
         for t,p in zip(temperature_profile,pressure_profile):
             try:
-                mols.append(self._safe_caller.call('fort_ggchem.run_ggchem',nelem+nmol,t,p*10,ab) )
+                m,d = self._safe_caller.call('fort_ggchem.run_ggchem',nelem+nmol,ndust,t,p*10,ab)
+                mols.append(m)
+                dust.append(d)
             except FortranStopException:
                 #self.warning('Error occured in Z:%s ratios:%s T:%s P:%s',self._metallicity,self._ratios,t,p)
                 self._safe_caller.cleanup()
                 self.reinitialize_ggchem()
                 raise InvalidModelException('GGChem most likely STOPPED due to a error')
         self._mols = np.stack(mols).T
+        self._dust = np.stack(dust).T
         #self._vmr = mols/np.sum(mols,axis=0)
         #self._vmr = self._mols
         #self._vmr = mols/1e-6 #m-3
