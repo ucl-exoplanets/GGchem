@@ -249,9 +249,9 @@ class GGChem(Chemistry):
                     elements.append(el)
                     ab = float(split_line[chosen])
                     self.info('%s %s', el, ab)
-                    abundances[self.get_element_index(el)] = ab
+                    self._initial_abundances[self.get_element_index(el)] = ab
         
-        #self.update_abundances(elements=elements,abundances=abundances)
+            
         self._initial_abundances/=self._initial_abundances[0]
         self.info('H relative abundances.....')
         for el,ab in zip(self.allowed_elements,self._initial_abundances):
