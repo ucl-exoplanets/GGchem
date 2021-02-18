@@ -4,21 +4,26 @@ from setuptools import find_packages
 from numpy.distutils.core import setup
 from numpy.distutils.core import Extension
 from numpy.distutils import log
-
+from numpy.distutils.command.build_ext import build_ext
+import os
 packages = find_packages(exclude=('tests', 'doc'))
 provides = ['taurex_ggchem', ]
 
 
 requires = []
+FORCE_COMPILER = os.environ.get('FORCE_COMPILER', None)
+EXTRA_LINK_FLAGS = os.environ.get('EXTRA_LINK_FLAGS', None)
 
+install_requires = []
 
-install_requires = ['numpy',
+requires = ['numpy',
                     'taurex']
 
 
-def build_fortran(package_name, fortran_sources, extra_compile_args=None):
-    ext = Extension(name=f'taurex_ggchem.external.{package_name}',
+def build_fortran(subpackage,package_name, fortran_sources, extra_compile_args=None, extra_link_args=None):
+    ext = Extension(name='.'.join(('taurex_ggchem',subpackage,package_name)),
                     extra_compile_args=extra_compile_args,
+                    extra_link_args=extra_link_args,
                     extra_f90_compile_args=extra_compile_args,
                     extra_f77_compile_args=extra_compile_args,
                     sources=fortran_sources)
@@ -26,7 +31,7 @@ def build_fortran(package_name, fortran_sources, extra_compile_args=None):
     return ext
 
 def build_ggchem():
-
+    import platform
     sources = [         
                         
 
@@ -54,12 +59,27 @@ def build_ggchem():
                         'taurex_ggchem/glue/taurex_glue.pyf',
                         ]
 
-    return build_fortran('fort_ggchem', sources,extra_compile_args=['-fdefault-real-8', '-fdefault-double-8', '-g','-O5'])
+    compile_args=['-fdefault-real-8', '-fdefault-double-8','-O3']
+    link_args=[]
+    sysname = platform.system()
+    if sysname == "Darwin":
+        compile_args.append("-mmacosx-version-min=10.9")
+        link_args+= ["-mmacosx-version-min=10.9",]
+    if EXTRA_LINK_FLAGS:
+        link_args.append(EXTRA_LINK_FLAGS)
+
+    return build_fortran('external', 'fort_ggchem', sources,extra_compile_args=compile_args, 
+                         extra_link_args=link_args)
 import glob
 
 
 entry_points = {'taurex.plugins': 'ggchem = taurex_ggchem'}
 
+class _custom_buildext(build_ext):
+
+    def run(self):
+        self.compiler = FORCE_COMPILER
+        super().run()
 
 extensions = [build_ggchem(), ]
 setup(name='taurex_ggchem',
@@ -74,6 +94,7 @@ setup(name='taurex_ggchem',
       requires=requires,
       install_requires=install_requires,
       ext_modules=extensions,
+      cmdclass={'build_ext': _custom_buildext},
       package_data={'taurex_ggchem':['external/data/**']},
 
       )
