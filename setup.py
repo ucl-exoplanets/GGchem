@@ -16,7 +16,7 @@ EXTRA_LINK_FLAGS = os.environ.get('EXTRA_LINK_FLAGS', None)
 
 install_requires = []
 
-requires = ['numpy',
+install_requires = ['numpy',
                     'taurex']
 
 
