@@ -6,8 +6,12 @@ from numpy.distutils.core import Extension
 from numpy.distutils import log
 from numpy.distutils.command.build_ext import build_ext
 import os
+
+plugin_name = 'taurex_ggchem'
+
+
 packages = find_packages(exclude=('tests', 'doc'))
-provides = ['taurex_ggchem', ]
+provides = [plugin_name, ]
 
 
 requires = []
@@ -21,7 +25,7 @@ install_requires = ['numpy',
 
 
 def build_fortran(subpackage,package_name, fortran_sources, extra_compile_args=None, extra_link_args=None):
-    ext = Extension(name='.'.join(('taurex_ggchem',subpackage,package_name)),
+    ext = Extension(name='.'.join((plugin_name,subpackage,package_name)),
                     extra_compile_args=extra_compile_args,
                     extra_link_args=extra_link_args,
                     extra_f90_compile_args=extra_compile_args,
@@ -30,7 +34,7 @@ def build_fortran(subpackage,package_name, fortran_sources, extra_compile_args=N
 
     return ext
 
-def build_ggchem():
+def build_libs():
     import platform
     sources = [         
                         
@@ -81,8 +85,8 @@ class _custom_buildext(build_ext):
         self.compiler = FORCE_COMPILER
         super().run()
 
-extensions = [build_ggchem(), ]
-setup(name='taurex_ggchem',
+extensions = [build_libs(), ]
+setup(name=plugin_name,
       author='Ahmed Faris Al-Refaie',
       author_email='ahmed.al-refaie.12@ucl.ac.uk',
       license="BSD",
@@ -95,6 +99,6 @@ setup(name='taurex_ggchem',
       install_requires=install_requires,
       ext_modules=extensions,
       cmdclass={'build_ext': _custom_buildext},
-      package_data={'taurex_ggchem':['external/data/**']},
+      package_data={plugin_name:['external/data/**']},
 
       )

@@ -438,3 +438,18 @@ class GGChem(Chemistry):
     @classmethod
     def input_keywords(cls):
         return ['ggchem', ]
+
+    BIBTEX_ENTRIES = [
+        """
+        @article{ ggchem,
+            author = {{Woitke, P.} and {Helling, Ch.} and {Hunter, G. H.} and {Millard, J. D.} and {Turner, G. E.} and {Worters, M.} and {Blecic, J.} and {Stock, J. W.}},
+            title = {Equilibrium chemistry down to 100 K - Impact of silicates and phyllosilicates on the carbon to oxygen ratio},
+            DOI= "10.1051/0004-6361/201732193",
+            url= "https://doi.org/10.1051/0004-6361/201732193",
+            journal = {A\&A},
+            year = 2018,
+            volume = 614,
+            pages = "A1",
+        }
+        """
+    ]
