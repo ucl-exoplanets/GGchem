@@ -94,7 +94,7 @@ pos = long_description.find('# TauREx')
 
 long_description = long_description[pos:]
 
-version = "0.0.0"
+version = "0.1.0-dev0"
 
 setup(name=plugin_name,
       author='Ahmed Faris Al-Refaie',
