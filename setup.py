@@ -86,16 +86,35 @@ class _custom_buildext(build_ext):
         super().run()
 
 extensions = [build_libs(), ]
+
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
+pos = long_description.find('# TauREx')
+
+long_description = long_description[pos:]
+
+version = "0.0.0"
+
 setup(name=plugin_name,
       author='Ahmed Faris Al-Refaie',
       author_email='ahmed.al-refaie.12@ucl.ac.uk',
       license="BSD",
-      description='TauREx 3 retrieval framework',
+      description='Python Wrapper for GGchem chemical scheme',
       packages=packages,
       include_package_data=True,
       entry_points=entry_points,
       provides=provides,
       requires=requires,
+      version=version,
+      keywords=['exoplanet',
+                'chemistry'
+                'taurex',
+                'plugin',
+                'taurex3',
+                'atmosphere',
+                'atmospheric'],
+      long_description=long_description,
       install_requires=install_requires,
       ext_modules=extensions,
       cmdclass={'build_ext': _custom_buildext},
