@@ -87,7 +87,7 @@ class _custom_buildext(build_ext):
 
 extensions = [build_libs(), ]
 
-with open("README.md", "r") as fh:
+with open("README.md", "r", encoding='utf-8') as fh:
     long_description = fh.read()
 
 pos = long_description.find('# TauREx')
@@ -117,6 +117,7 @@ setup(name=plugin_name,
       long_description=long_description,
       install_requires=install_requires,
       ext_modules=extensions,
+      long_description_content_type='text/markdown',
       cmdclass={'build_ext': _custom_buildext},
       package_data={plugin_name:['external/data/**']},
 
