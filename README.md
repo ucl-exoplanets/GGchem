@@ -133,21 +133,147 @@ The equilibrium condensation code requires many calls of the gas-phase
 equilibrium chemistry routine, and takes about 0.02-0.09 sec per call,
 depending on how much useful information is found in database.dat.
  
-# TauREx 3 plugin
+# TauREx-GGchem plugin
 
-GGChem can be used in TauREx (version>3.1) with a supplied plugin. To install it do:
+A Python wrapper built using the [TauREx](https://github.com/ucl-exoplanets/TauREx3_public) is available.
+The wrapper also installs all available datafiles included with GGchem
 
+## Installation
+
+
+You can install one of the prebuilt binary wheels for Windows, macOS and manylinux through pip:
+```bash
+pip install taurex_ggchem
 ```
+
+### Installing from source
+
+
+To install from source a valid C/C++ and FORTRAN compiler must be present. You can compile it by doing:
+```bash
+git clone https://github.com/ucl-exoplanets/GGchem.git
+cd GGchem
 pip install .
 ```
 
-in the root directory. This will also automatically compile everything for you.
-Now you can use it in a TauREx3 input file:
+## Running in TauREx
 
+Once installed you can select the chemical model through the **chemistry_type** keyword under
+Chemistry.
 ```
 [Chemistry]
 chemistry_type = ggchem
-elements = H,He,C,N,O
-abundances= 9e-1,1e-2
+metallicity = 1.0
+selected_elements = H, He, C, N, O, Ti, V, S, K
+ratio_elements = C, N, Ti
+ratios_to_O = 0.5,0.001, 1e-4
 equilibrium_condensation = True
+
+[Fitting]
+Ti_O_ratio:fit = True
+Ti_O_ratio:prior = "LogUniform(bounds=(-6,2))"
+S_O_ratio:fit = True
+S_O_ratio:prior = "LogUniform(bounds=(-6,2))"
+metallicity:fit = True
+metallicity:prior = "LogUniform(bounds=(-6,2))"
+```
+
+### Input arguments:
+
+|Argument| Description| Type| Default | Required |
+---------|------------|-----|---------|----------|
+dispol_files| Path to thermochemical data | list of strings | Built-in (BarklemCollet,StockKitzmann_withoutTsuji, WoitkeRefit ) | |
+abundance_profile| Initial abundance profile. Either *solar*, *meteor*, *ocean* or *earth*  | string | 'solar' | |
+selected_elements| List of elements to include | list of string | All elements in GGchem | |
+ratio_elements| List of elements to set the ratio | list of string | | |
+ratios_to_O| ratio of each 'ratio_element' relative to oxygen | array | | |
+he_h_ratio| He/H ratio | float | 0.083 | |
+metallicity| Metallicity relative to initial abundance | float | 1.0 | |
+include_charge| Include ions | bool | False | |
+equilibrium_condensation| Include condenstation | bool | False | |
+dustchem_file| Dust chemistry file | string | Built-in (DustChem.dat) | |
+Tfast| Lowest temperature (K) to use faster method  | float | 1000 | |
+new_back_it| | integer | 6 | |
+new_back_fac| | float | 1e5 | |
+new_pre_method| | integer | 2 | |
+new_full_it| | bool | False | |
+new_fast_level| | integer | 1 | |
+
+### Retrieval Parameters:
+
+|Fitting Parameter| Description| 
+---------|------------|
+metallicity|Metallicity relative to solar|
+
+The wrapper will generate oxygen retrieval parameters for all metallic elements within the
+chemical model. If Ti is present (either by default or specifing in **selected_elements**)
+then a **Ti_O_ratio** retrieval parameter will be available.
+Using the default **selected_parameters** will give access to:
+
+|Fitting Parameter| Description| 
+---------|------------|
+C | C/O ratio |
+N | N/O ratio |
+Na | Na/O ratio |
+Mg | Mg/O ratio |
+Si | Si/O ratio |
+Fe | Fe/O ratio |
+Al | Al/O ratio |
+Ca | Ca/O ratio |
+Ti | Ti/O ratio |
+S | S/O ratio |
+Cl | Cl/O ratio |
+K | K/O ratio |
+Li | Li/O ratio |
+F | F/O ratio |
+P | P/O ratio |
+V | V/O ratio |
+Cr | Cr/O ratio |
+Mn | Mn/O ratio |
+Ni | Ni/O ratio |
+Zr | Zr/O ratio |
+W | W/O ratio |
+
+
+## Running in Python
+
+You can import the chemistry scheme in Python pretty easily
+
+```python
+>>> from taurex_ggchem import GGChem
+>>> gg = GGChem(metallicity=1.0,  
+         selected_elements=['H','He','C','O','N','K'], 
+         abundance_profile='earthcrust', 
+         equilibrium_condensation=True) 
+```
+You can either pass it into a TauREx forward model like so:
+```python
+>>> tm = TransmissionModel(chemistry=gg)
+```
+Or use it independently to compute volume mixing ratios for gas-phase and condensates by passing in
+temperature and pressure ( Pascal ) arrays:
+```python
+>>> nlayers = 100
+>>> T = numpy.linspace(400,1000,nlayers)
+>>> P = numpy.logspace(1,5, nlayers)
+>>> gg.initialize_chemistry(nlayers=nlayers, temperature_profile=T, pressure_profile=P)
+>>> gg.gases
+['H', 'He', 'C', 'O', 'N',..., 'N3', 'O3', 'C3H']
+>>> gg.mixProfile
+array([[4.75989782e-04, 4.93144149e-04, 5.10561665e-04, ...,
+        2.89575385e-05, 2.47386006e-05, 2.10241059e-05],
+       ...,
+       [2.49670621e-16, 1.44224904e-16, 8.29805526e-17, ...,
+        9.48249338e-42, 4.75884162e-42, 2.37999459e-42]])
+>>> gg.condensates
+['C[s]', 'H2O[s]', 'H2O[l]', 'NH3[s]', 'CH4[s]', 'CO[s]', 'CO2[s]']
+>>> gg.condensateMixProfile
+array([[0.00000000e+00, 0.00000000e+00, 0.00000000e+00,...,
+        0.00000000e+00, 0.00000000e+00],
+       [0.00000000e+00, 0.00000000e+00, 0.00000000e+00, ...,
+        0.00000000e+00, 9.82922802e-10, 1.88551848e-10, 2.88471985e-11,
+        4.40651877e-12, 6.95597887e-13],
+        ...,
+        [0.00000000e+00, 0.00000000e+00, 0.00000000e+00, ...,
+        0.00000000e+00, 0.00000000e+00]])
 ```
