@@ -212,27 +212,27 @@ Using the default **selected_parameters** will give access to:
 
 |Fitting Parameter| Description| 
 ---------|------------|
-C | C/O ratio |
-N | N/O ratio |
-Na | Na/O ratio |
-Mg | Mg/O ratio |
-Si | Si/O ratio |
-Fe | Fe/O ratio |
-Al | Al/O ratio |
-Ca | Ca/O ratio |
-Ti | Ti/O ratio |
-S | S/O ratio |
-Cl | Cl/O ratio |
-K | K/O ratio |
-Li | Li/O ratio |
-F | F/O ratio |
-P | P/O ratio |
-V | V/O ratio |
-Cr | Cr/O ratio |
-Mn | Mn/O ratio |
-Ni | Ni/O ratio |
-Zr | Zr/O ratio |
-W | W/O ratio |
+C_O_ratio | C/O ratio |
+N_O_ratio | N/O ratio |
+Na_O_ratio | Na/O ratio |
+Mg_O_ratio | Mg/O ratio |
+Si_O_ratio | Si/O ratio |
+Fe_O_ratio | Fe/O ratio |
+Al_O_ratio | Al/O ratio |
+Ca_O_ratio | Ca/O ratio |
+Ti_O_ratio | Ti/O ratio |
+S_O_ratio | S/O ratio |
+Cl_O_ratio | Cl/O ratio |
+K_O_ratio | K/O ratio |
+Li_O_ratio | Li/O ratio |
+F_O_ratio | F/O ratio |
+P_O_ratio | P/O ratio |
+V_O_ratio | V/O ratio |
+Cr_O_ratio | Cr/O ratio |
+Mn_O_ratio | Mn/O ratio |
+Ni_O_ratio | Ni/O ratio |
+Zr_O_ratio | Zr/O ratio |
+W_O_ratio | W/O ratio |
 
 
 ## Running in Python
@@ -276,4 +276,31 @@ array([[0.00000000e+00, 0.00000000e+00, 0.00000000e+00,...,
         ...,
         [0.00000000e+00, 0.00000000e+00, 0.00000000e+00, ...,
         0.00000000e+00, 0.00000000e+00]])
+```
+
+## Bibliography
+
+If you use the plugin please cite the relevant articles. TauREx will output
+it at program end. You can get the citation from Python like so:
+
+```python
+from taurex import __citations__
+print(__citations__)
+print(gg.nice_citation())
+```
+
+Which gives:
+```
+TauREx III: A fast, dynamic and extendable framework for retrievals
+Al-Refaie, Ahmed F., Changeat, Quentin, Waldmann, Ingo P., Tinetti, Giovanna
+arXiv, 1912.07759, 2019
+
+Equilibrium chemistry down to 100 K - Impact of silicates and phyllosilicates on the carbon to oxygen ratio
+Woitke, P., Helling, Ch., Hunter, G. H., Millard, J. D., Turner, G. E., Worters, M., Blecic, J., Stock, J. W.
+A&A, 614, A1, 2018
+```
+
+You can also generate bibtex from the input file like so:
+```bash
+taurex -i myinput.par --bibtex mybib.bib
 ```
