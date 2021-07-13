@@ -35,6 +35,7 @@ jobs:
         env:
           CIBW_BUILD: ${{ matrix.cibw_python }}
           FC: gfortran
+          EXTRA_LINK_FLAGS: -static
 
       - name: Build wheels (Windows)
         if: contains(matrix.os, 'windows')
@@ -63,7 +64,7 @@ jobs:
         env:
           CIBW_BUILD: ${{ matrix.cibw_python }}
           FC: gfortran-10
-
+          EXTRA_LINK_FLAGS: -static
       - uses: actions/upload-artifact@v2
         with:
           path: ./wheelhouse/*.whl
