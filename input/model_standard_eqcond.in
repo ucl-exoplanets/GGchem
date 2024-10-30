@@ -13,12 +13,12 @@ dispol_WoitkeRefit.dat                  ! dispol_file3
 .true.                ! model_eqcond
 
 # model options
-1                     ! model_dim  (0,1,2)
+0                     ! model_dim  (0,1,2)
 .true.                ! model_pconst
-2500.0                ! Tmax [K]
-100.0                 ! Tmin [K]      (if model_dim>0)
-1.E+0                 ! pmax [bar]    (if pconst=.true.)
-1.E+0                 ! pmin [bar]
+300.0                ! Tmax [K]
+300.0                 ! Tmin [K]      (if model_dim>0)
+100                 ! pmax [bar]    (if pconst=.true.)
+100                 ! pmin [bar]
 600                   ! Npoints      
 7                     ! NewBackIt  
 1.E+5                 ! NewBackFac

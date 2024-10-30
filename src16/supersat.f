@@ -25,8 +25,17 @@
       kT  = bk*T1
       RT  = rgas*T1
       Sat = 0.Q0
+
+      print *,'VALS', T1, T2, T3, kT, RT
+      print *,'----------'
+      
+
       do i=1,NDUST
+        print *, '------',dust_nam(i),'--------'
+        if (trim(dust_nam(i)) == 'H2SO4[s]') then
+        endif
         a(:) = cfit(i,:)
+        
         if (fit(i)==1) then
           !-------------------------------------
           !***  dG-fit Sharp & Huebner 1990  ***
@@ -47,16 +56,38 @@
           !***  dG polynom-fit NIST-Janaf  ***
           !-----------------------------------
           pst = bar
+          if (trim(dust_nam(i)) == 'H2SO4[s]') then
+            
+            print *,'AVALUES ', a(0:4)
+          endif
           dG = a(0)/T1 + a(1) + a(2)*T1 + a(3)*T2 + a(4)*T3
           dG = dG/RT
+          if (trim(dust_nam(i)) == 'H2SO4[s]') then
+
+            print *,'DG=', dG
+          endif
           lbruch = 0.Q0
           do j=1,dust_nel(i)
+
+            
             el     = dust_el(i,j)
             term   = nat(el)*kT/pst
+            if (trim(dust_nam(i)) == 'H2SO4[s]') then
+              print *, elnam(el), ' ', nat(el), term, dust_nu(i,j)
+            endif 
+            !print *,'LOOP', pst, nat(el)
             lbruch = lbruch + dust_nu(i,j)*LOG(term)
           enddo
-          Sat(i) = EXP(lbruch-dG)
+          if (trim(dust_nam(i)) == 'H2SO4[s]') then
 
+            print *,'LBRUCH', lbruch
+          endif
+
+          Sat(i) = EXP(lbruch-dG)
+          if (trim(dust_nam(i)) == 'H2SO4[s]') then
+            print *, 'SAT', Sat(i)
+            stop
+          endif
         else if (fit(i)==3) then
           !-----------------------------------------
           !***  ln(pvap) polynom-fit NIST-Janaf  ***

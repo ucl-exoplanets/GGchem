@@ -11,6 +11,7 @@ Static_*.bak
 database.dat
 database.bak
 paper
+builddir/
 TEA
 TEA.*
 TEAout*old

@@ -25,7 +25,7 @@
 
       open(12, file=trim(DustChem_file), status='old')
  
-      write(*,*) '--- dust species ---'
+      write(*,*) '--- dust species --kasdflkjaskjfakljshdflkjasd-'
       read(12,1000) zeile
       read(12,1000) zeile
       read(12,*) imax
