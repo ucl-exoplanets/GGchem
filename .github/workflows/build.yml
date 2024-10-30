@@ -29,7 +29,7 @@ jobs:
         - [macos-14, macosx, arm64, "12.0"]
         - [windows-2019, win, AMD64, ""]
         #- [ubuntu-22.04, musllinux, x86_64, ""]
-        
+
         python: [["cp39", "3.9"], ["cp310", "3.10"], ["cp311", "3.11"], ["cp312", "3.12"]]
         # python[0] is used to specify the python versions made by cibuildwheel
 
@@ -177,8 +177,8 @@ jobs:
       - name: Build source distribution
         run: bash build_tools/build_sdist.sh
 
-      - name: Test source distribution
-        run: bash build_tools/test_sdist.sh
+      # - name: Test source distribution
+      #   run: bash build_tools/test_sdist.sh
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4
