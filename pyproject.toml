@@ -12,7 +12,7 @@ name = "taurex_ggchem"
 description = "Taurex Python wrapper for the FORTRAN GGChem code."
 dependencies = [
     "numpy>=1.25.0",
-    "astropy>=5.0.0",
+    "taurex>=3.1.13",
 ]
 version="1.0.1"
 readme = "README.md"
