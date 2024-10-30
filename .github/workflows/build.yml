@@ -74,20 +74,20 @@ jobs:
           path: ./wheelhouse/*.whl
   
 
-  upload_pypi:
-    if: github.event_name == 'push'
-    needs: [build_wheels]
-    runs-on: ubuntu-latest
-    # upload to PyPI on every tag starting with 'v'
-    # alternatively, to publish when a GitHub Release is created, use the following rule:
-    # if: github.event_name == 'release' && github.event.action == 'published'
-    steps:
-      - uses: actions/download-artifact@v2
-        with:
-          name: artifact
-          path: dist
+  # upload_pypi:
+  #   if: github.event_name == 'push'
+  #   needs: [build_wheels]
+  #   runs-on: ubuntu-latest
+  #   # upload to PyPI on every tag starting with 'v'
+  #   # alternatively, to publish when a GitHub Release is created, use the following rule:
+  #   # if: github.event_name == 'release' && github.event.action == 'published'
+  #   steps:
+  #     - uses: actions/download-artifact@v2
+  #       with:
+  #         name: artifact
+  #         path: dist
 
-      - uses: pypa/gh-action-pypi-publish@master
-        with:
-          user: __token__
-          password: ${{ secrets.pypi_password }}
+  #     - uses: pypa/gh-action-pypi-publish@master
+  #       with:
+  #         user: __token__
+  #         password: ${{ secrets.pypi_password }}
