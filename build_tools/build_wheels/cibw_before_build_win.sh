@@ -1,13 +1,13 @@
 set -xe
 
 PROJECT_DIR="$1"
-PLATFORM=$(PYTHONPATH=tools python -c "import openblas_support; print(openblas_support.get_plat())")
+PLATFORM=$(PYTHONPATH=build_tools python -c "import openblas_support; print(openblas_support.get_plat())")
 
 printenv
 # Update license
 
 # Install Openblas
-PYTHONPATH=tools python -c "import openblas_support; openblas_support.make_init('taurex_ggchem')"
+PYTHONPATH=build_tools python -c "import openblas_support; openblas_support.make_init('taurex_ggchem')"
 mkdir -p /c/opt/32/lib/pkgconfig
 mkdir -p /c/opt/64/lib/pkgconfig
 
