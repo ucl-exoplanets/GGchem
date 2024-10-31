@@ -79,7 +79,7 @@ if ff.has_argument('-fdefault-double-8')
   add_project_arguments('-fdefault-double-8', language: 'fortran')
 endif
 
-if ff.has_argument('-r8'):
+if ff.has_argument('-r8')
   add_project_arguments('-r8', language: 'fortran')
 endif
 
