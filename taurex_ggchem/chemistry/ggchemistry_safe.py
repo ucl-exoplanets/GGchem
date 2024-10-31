@@ -225,14 +225,11 @@ class GGChem(Chemistry):
         # print('ELEMENTS',fchem.parameters.elements)
         self.info("Elements in system: %s", elements)
         dispol = [str(s).ljust(200) for s in dispol_files]
-        dispol_array = np.empty((len(dispol), 200), dtype="c")
-        for i, d in enumerate(dispol):
-            dispol_array[i] = d
 
         self.info("Initializing GGchemistry")
 
         self._safe_caller.call(
-            "fort_ggchem.init_taurex_chemistry", dispol_array, self._charge
+            "fort_ggchem.init_taurex_chemistry", dispol, self._charge
         )
 
         self.setup_abundances(abundance_profile)
@@ -248,10 +245,10 @@ class GGChem(Chemistry):
         nmole = self._safe_caller.get_val("chemistry.nmole")
 
         _mols = self._safe_caller.call("fort_ggchem.copy_molecule_names", nmole)
-        mols = np.lib.stride_tricks.as_strided(_mols, strides=(_mols.shape[1], 1))
+        self.debug("Molecules %s", _mols)
 
-        mols = [s[0].decode("utf-8") for s in np.char.strip(mols.view("S20"))]
-
+        mols = [s.decode("utf-8").strip() for s in _mols]
+        self.debug("Molecules decoded %s", mols)
         self._molecules = mols
 
         if dustchem_file is None:
@@ -266,10 +263,8 @@ class GGChem(Chemistry):
         ndust = self._safe_caller.get_val("dust_data.ndust")
 
         _dust = self._safe_caller.call("fort_ggchem.copy_dust_names", ndust)
-        dust = np.lib.stride_tricks.as_strided(_dust, strides=(_dust.shape[1], 1))
-
-        dust = [s[0].decode("utf-8") for s in np.char.strip(dust.view("S20"))]
-
+        dust = [s.decode("utf-8").strip() for s in _dust]
+        self.debug("Dust decoded %s", dust)
         self._condensates = dust
 
         # quit()
@@ -565,7 +560,7 @@ class GGChem(Chemistry):
         ]
 
     BIBTEX_ENTRIES = [
-        """
+        r"""
         @article{ ggchem,
             author = {{Woitke, P.} and {Helling, Ch.} and {Hunter, G. H.} and {Millard, J. D.} and {Turner, G. E.} and {Worters, M.} and {Blecic, J.} and {Stock, J. W.}},
             title = {Equilibrium chemistry down to 100 K - Impact of silicates and phyllosilicates on the carbon to oxygen ratio},

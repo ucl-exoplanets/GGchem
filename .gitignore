@@ -9,6 +9,7 @@ src16/*~
 Static_*.dat
 Static_*.bak
 database.dat
+.venv/
 database.bak
 paper
 wheelhouse/
