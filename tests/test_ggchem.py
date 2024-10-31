@@ -1,3 +1,6 @@
+import taurex_ggchem
+
+
 def test_ggchem():
     """Test GGChem class if it functions properly"""
     from taurex_ggchem import GGChem

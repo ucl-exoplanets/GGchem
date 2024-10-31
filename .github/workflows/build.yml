@@ -177,8 +177,8 @@ jobs:
       - name: Build source distribution
         run: bash build_tools/build_sdist.sh
 
-      # - name: Test source distribution
-      #   run: bash build_tools/test_sdist.sh
+      - name: Test source distribution
+        run: bash build_tools/test_sdist.sh
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4
