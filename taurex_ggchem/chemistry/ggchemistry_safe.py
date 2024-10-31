@@ -423,8 +423,8 @@ class GGChem(Chemistry):
         self.info("Active molecules %s", active_mols)
         self.info("Inactive molecules %s", inactive_mols)
 
-        self._active_index = np.array(active_indices, dtype=np.integer)
-        self._inactive_index = np.array(inactive_indices, dtype=np.integer)
+        self._active_index = np.array(active_indices, dtype=np.int64)
+        self._inactive_index = np.array(inactive_indices, dtype=np.int64)
 
         self._active_mols = active_mols
         self._inactive_mols = inactive_mols
