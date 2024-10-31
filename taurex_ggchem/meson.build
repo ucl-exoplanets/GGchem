@@ -37,7 +37,7 @@ command_args = [py3, '-m', 'numpy.f2py', '@INPUT@', '--build-dir', '@OUTDIR@', '
 
 ggchem_module = custom_target(
     'fort_ggchemmodule',
-    output : ['fort_ggchemmodule.c', 'fort_ggchem-f2pywrappers2.f90'],
+    output : ['fort_ggchemmodule.c', 'fort_ggchem-f2pywrappers2.f90', 'fort_ggchem-f2pywrappers.f'],
     input : '../glue/fort_ggchem.pyf',
     command: command_args
 )
