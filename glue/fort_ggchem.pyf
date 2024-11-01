@@ -3,6 +3,17 @@
 
 python module fort_ggchem ! in 
     interface  ! in :fort_ggchem
+        module structure ! in :fort_ggchem:glue/datamod.f90
+            use dust_data, only: nelem
+            integer, parameter,optional :: qp=16
+            integer, parameter,optional :: npmax=10000
+            real*8 dimension(10000) :: tgas
+            real*8 dimension(10000) :: press
+            real*8 dimension(10000) :: pelec
+            real*8 dimension(10000) :: dens
+            real*8 dimension(10000) :: nhtot
+            real(kind=16) dimension(10000,41) :: estruc
+        end module structure
         module parameters ! in :fort_ggchem:glue/datamod.f90
             character(len=200) :: elements
             character(len=200) :: abund_file
@@ -135,17 +146,6 @@ python module fort_ggchem ! in
             real*8 :: tt2
             real*8 :: tt3
         end module chemistry
-        module structure ! in :fort_ggchem:glue/datamod.f90
-            use dust_data, only: nelem
-            integer, parameter,optional :: qp=16
-            integer, parameter,optional :: npmax=10000
-            real*8 dimension(10000) :: tgas
-            real*8 dimension(10000) :: press
-            real*8 dimension(10000) :: pelec
-            real*8 dimension(10000) :: dens
-            real*8 dimension(10000) :: nhtot
-            real(kind=16) dimension(10000,41) :: estruc
-        end module structure
         module exchange ! in :fort_ggchem:glue/datamod.f90
             use chemistry, only: nmole
             use dust_data, only: nelem

@@ -27,7 +27,7 @@ fortranobject_dep = declare_dependency(
     include_directories: [inc_np, inc_f2py],
 )
 
-command_args = [py3, '-m', 'numpy.f2py', '@INPUT@', '--build-dir', '@OUTDIR@', '--lower']
+command_args = [py3, '-m', 'numpy.f2py', '@INPUT@', '--build-dir', '@OUTDIR@', '--lower', '--backend', 'meson']
 
 # Add '-fdefault-real-8', '-fdefault-double-8' and -O3 to the compile args
 # for the Fortran code
@@ -73,7 +73,7 @@ py3.extension_module('fort_ggchem',
   dependencies: fortranobject_dep,
   install : true,
   link_language: 'fortran',
-  subdir: 'taurex_ggchem/external',
+  subdir: 'taurex_ggchem',
 )
 
 py3.install_sources(
