@@ -1,6 +1,6 @@
 from taurex.chemistry import Chemistry
 import numpy as np
-import taurex_ggchem.external.fort_ggchem as fchem
+import taurex_ggchem.fort_ggchem as fchem
 import os
 from taurex.core import fitparam
 import typing as t
