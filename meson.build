@@ -7,7 +7,7 @@ project(
   default_options: [
     'c_std=c99',
     'fortran_std=legacy',
-    'optimization=2',
+    'optimization=1',
   ],
 )
 

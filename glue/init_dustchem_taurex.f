@@ -22,7 +22,6 @@
       write(*,*) "reading "//trim(DustChem_file)//" ..."
       write(*,*) "========================"
       trivial(:)=' '
-
       open(12, file=trim(DustChem_file), status='old')
  
       write(*,*) '--- dust species --kasdflkjaskjfakljshdflkjasd-'

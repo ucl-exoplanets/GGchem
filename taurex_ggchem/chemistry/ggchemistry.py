@@ -215,15 +215,14 @@ class GGChemNonSafe(Chemistry):
             ]
         else:
             dispol_files = [pathlib.Path(s) for s in dispol_files]
-            for dispol in dispol_files:
-                if not dispol.exists():
-                    raise FileNotFoundError(f"Dispol file {dispol} not found")
 
-            fchem.parameters.elements = " ".join([s.ljust(2) for s in elements]).ljust(
-                200
-            )
+        for dispol in dispol_files:
+            if not dispol.exists():
+                raise FileNotFoundError(f"Dispol file {dispol} not found")
 
-        # print('ELEMENTS',fchem.parameters.elements)
+        fchem.parameters.elements = " ".join([s.ljust(2) for s in elements]).ljust(200)
+
+        print("ELEMENTS", fchem.parameters.elements)
         self.info("Elements in system: %s", elements)
         dispol = [str(s).ljust(200) for s in dispol_files]
 
@@ -255,9 +254,9 @@ class GGChemNonSafe(Chemistry):
 
         self.info("Loading dustchem file %s", dustchem_file)
         fchem.dust_data.dustchem_file = str(dustchem_file).ljust(200)
-
+        print("Start dustchem")
         fchem.init_dustchem_taurex()
-
+        print("Chem initialized")
         ndust = fchem.dust_data.ndust
 
         _dust = fchem.fort_ggchem.copy_dust_names(ndust)
@@ -390,8 +389,7 @@ class GGChemNonSafe(Chemistry):
 
     def get_element_index(self, element: str) -> int:
         elnums = fchem.chemistry.elnum
-        index = getattr(fchem.chemistry, "el" + element.strip().lower(), None)
-
+        index = getattr(fchem.chemistry, f"{element.strip().lower()}", None)
         return elnums[index - 1] - 1
         # return self.get_element_index(element)
 

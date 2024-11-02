@@ -216,13 +216,15 @@ class GGChem(Chemistry):
             ]
         else:
             dispol_files = [pathlib.Path(s) for s in dispol_files]
-            for dispol in dispol_files:
-                if not dispol.exists():
-                    raise FileNotFoundError(f"Dispol file {dispol} not found")
+
+        for dispol in dispol_files:
+            if not dispol.exists():
+                raise FileNotFoundError(f"Dispol file {dispol} not found")
+        print(elements)
         self._safe_caller.set_val(
             "parameters.elements", " ".join([s.ljust(2) for s in elements]).ljust(200)
         )
-        # print('ELEMENTS',fchem.parameters.elements)
+
         self.info("Elements in system: %s", elements)
         dispol = [str(s).ljust(200) for s in dispol_files]
 
@@ -258,6 +260,7 @@ class GGChem(Chemistry):
         self._safe_caller.set_val(
             "dust_data.dustchem_file", str(dustchem_file).ljust(200)
         )
+
         self._safe_caller.call("init_dustchem_taurex")
 
         ndust = self._safe_caller.get_val("dust_data.ndust")
