@@ -545,7 +545,7 @@ class GGChemNonSafe(Chemistry):
     @classmethod
     def input_keywords(cls):
         return [
-            "ggchem",
+            "ggchem-unsafe",
         ]
 
     BIBTEX_ENTRIES = [
