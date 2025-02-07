@@ -1,7 +1,7 @@
 project(
   'TaurexGGChem',
   'c',
-  version: '1.0.6',
+  version: '1.0.7',
   license: 'BSD-3',
   meson_version: '>= 1.1.0',
   default_options: [
