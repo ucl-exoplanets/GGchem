@@ -293,9 +293,17 @@ class GGChemNonSafe(Chemistry):
         else:
             return self._dust
 
-    def setup_abundances(self, profile: npt.NDArray[np.float64]) -> None:
+    def setup_abundances(self, profile: str) -> None:
 
-        if profile is not None:
+        if profile in (
+            "earthcrust",
+            "ocean",
+            "solar",
+            "star",
+            "sun",
+            "meteor",
+            "meteorites",
+        ):
             self.info("Selected abundance profile %s", profile)
             abundance_file = self._base_data_path / "Abundances.dat"
             chosen = 4  # 4 - earth 5 - ocean 6 - solar 7- meteorite
@@ -336,6 +344,25 @@ class GGChemNonSafe(Chemistry):
 
                     elements.append(el)
                     ab = float(split_line[chosen])
+                    self.info("%s %s", el, ab)
+                    self._initial_abundances[self.get_element_index(el)] = ab
+        elif profile is not None:
+            path = pathlib.Path(profile)
+            if not path.exists():
+                raise FileNotFoundError(f"Abundance profile {profile} not found")
+
+            elements = []
+
+            with open(path, "r") as f:
+                for line in f:
+                    split_line = line.split()
+                    el = split_line[0].strip()
+
+                    if el not in self.allowed_elements:
+                        continue
+
+                    elements.append(el)
+                    ab = float(split_line[1])
                     self.info("%s %s", el, ab)
                     self._initial_abundances[self.get_element_index(el)] = ab
 
