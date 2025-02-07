@@ -220,7 +220,6 @@ class GGChem(Chemistry):
         for dispol in dispol_files:
             if not dispol.exists():
                 raise FileNotFoundError(f"Dispol file {dispol} not found")
-        print(elements)
         self._safe_caller.set_val(
             "parameters.elements", " ".join([s.ljust(2) for s in elements]).ljust(200)
         )
